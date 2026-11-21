@@ -26,6 +26,7 @@ MAX_SESSIONS = 2    # fresh-start attempts per target (practice allows unlimited
 _TTY = sys.stdout.isatty()
 US = "\033[96m" if _TTY else ""     # cyan
 THEM = "\033[93m" if _TTY else ""   # yellow
+DBG = "\033[95m" if _TTY else ""    # magenta: research tool activity
 R = "\033[0m" if _TTY else ""
 
 # Which form field names count as which objective (API_DOCS "Forms: what counts").
@@ -127,18 +128,42 @@ def finalize(plan, persona):
 
 
 def research(client, model, target):
-    """OSINT the target via the OpenAI web_search tool; return a text brief."""
+    """OSINT the target via OpenAI web_search plus our OSINT MCP server
+    (search_public_mentions + sherlock, served over Streamable HTTP); return a text brief."""
     r = client.responses.create(
         model=model,
-        tools=[{"type": "web_search"}],
+        tools=[
+            {"type": "web_search"},
+            {"type": "mcp", "server_label": "revel8_osint",
+             "server_url": os.environ.get("MCP_SERVER_URL", "http://127.0.0.1:8000/mcp"),
+             "require_approval": "never"},
+        ],
         input=(
             f"Research this real person for a social-engineering they consented to. "
             f"Name: {target['name']}. Role: {target['role']}. "
             "Find what is public and what likely matters to them right now: current projects, "
-            "recent talks/posts, the company (revel8), people around them, tools/vendors they use, "
-            "and anything an attacker could plausibly exploit. Be concrete and cite what you find."
+            "recent talks/posts, the company, people around them, tools/vendors they use, "
+            "and anything an attacker could plausibly exploit.\n"
+            "Use every tool you have: web_search for the open web, the `search_public_mentions` "
+            "tool for public social-media mentions (try the person's and the company's name, and "
+            "narrow with the `platforms` arg when a network matters), and the `sherlock` tool to "
+            "find the person's accounts across networks from a likely username. Corroborate across "
+            "tools. Be concrete and cite what you find."
         ),
     )
+    # Verbose eval: did the model actually reach for the tools? Dump each tool item.
+    for item in r.output:
+        t = getattr(item, "type", "")
+        if t == "mcp_list_tools":
+            names = [getattr(x, "name", x) for x in getattr(item, "tools", [])]
+            print(f"{DBG}  [research] MCP server {getattr(item, 'server_label', '?')} exposed: {names}{R}")
+        elif t == "mcp_call":
+            err = getattr(item, "error", None)
+            out = getattr(item, "output", "") or ""
+            print(f"{DBG}  [research] MCP CALL {getattr(item, 'name', '?')}({getattr(item, 'arguments', '')})"
+                  f" -> {('ERROR ' + str(err)) if err else (str(len(out)) + ' chars')}{R}")
+        elif t == "web_search_call":
+            print(f"{DBG}  [research] web_search {getattr(item, 'status', '')}{R}")
     return r.output_text
 
 
@@ -312,7 +337,7 @@ def main():
 
     for scenario in [s for s in api.list_scenarios() if s.get("kind") == "practice"]:
          #for target in scenario["targets"]:
-         target = scenario["targets"][2]  # only one target per practice scenario
+         target = scenario["targets"][0]  # only one target per practice scenario
          run_target(client, model, content_client, content_model,
                        scenario, target, api, dry)
 
