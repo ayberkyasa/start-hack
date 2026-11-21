@@ -13,13 +13,11 @@ import json
 import os
 import re
 import sys
-import time
-import uuid
 
-import requests
 from openai import OpenAI
 
-API = "https://target-api.apps.01.cf.eu01.stackit.cloud/v1"
+from api_client import APIClient
+
 MAX_TOUCHES = 10    # per session; practice budget is 30/session
 MAX_IGNORES = 2     # consecutive ignores -> the pretext is dead, abandon the session
 MAX_SESSIONS = 2    # fresh-start attempts per target (practice allows unlimited sessions)
@@ -128,17 +126,6 @@ def finalize(plan, persona):
         plan["body"] = ensure_url_in_body(plan.get("body", ""), plan["page"]["url"])
 
 
-def post_api(url, headers, body, timeout=120):
-    """POST with a few retries on the transient codes the docs tell us to retry."""
-    for attempt in range(3):
-        r = requests.post(url, headers=headers, json=body, timeout=timeout)
-        if r.status_code in (429, 502, 503, 504) and attempt < 2:
-            time.sleep(3)
-            continue
-        r.raise_for_status()
-        return r.json()
-
-
 def research(client, model, target):
     """OSINT the target via the OpenAI web_search tool; return a text brief."""
     r = client.responses.create(
@@ -210,18 +197,18 @@ def next_move(client, model, scenario, target, brief, transcript, persona, attem
     return extract_json(r.choices[0].message.content)
 
 
-def send(sid, plan, target_id, headers):
-    """Register an optional landing page, then send the crafted message. Returns the response."""
-    if plan.get("page"):
-        page = {k: plan["page"][k] for k in ("url", "title", "html", "text", "fields")
-                if k in plan["page"]}
+def send(api, sid, plan, target_id):
+    """Register an optional landing page, then send the crafted message. Returns the response.
+    The client owns retries and the per-message Idempotency-Key."""
+    page = plan.get("page")
+    if page:
         # the API wants fields as plain strings; the model sometimes emits {"name","type"} objects
-        page["fields"] = [f.get("name") if isinstance(f, dict) else f for f in page.get("fields", [])]
-        post_api(f"{API}/sessions/{sid}/pages", headers, page)
-    msg = {k: plan[k] for k in ("channel", "from", "subject", "body", "attachments") if plan.get(k)}
-    msg["to"] = target_id
-    key = {**headers, "Idempotency-Key": str(uuid.uuid4())}
-    return post_api(f"{API}/sessions/{sid}/messages", key, msg)
+        fields = [f.get("name") if isinstance(f, dict) else f for f in page.get("fields", [])]
+        api.register_page(sid, page["url"], title=page.get("title"),
+                          html=page.get("html"), text=page.get("text"), fields=fields)
+    return api.send_message(sid, to=target_id, channel=plan.get("channel"),
+                            body=plan.get("body", ""), sender=plan.get("from"),
+                            subject=plan.get("subject"), attachments=plan.get("attachments"))
 
 
 def describe(plan, events):
@@ -263,7 +250,7 @@ def show_them(events):
             print(f"{THEM}◀ TARGET event: {e.get('type')} {kept}{R}")
 
 
-def run_session(content_client, content_model, scenario, target, headers, brief, attempt, dry):
+def run_session(content_client, content_model, scenario, target, api, brief, attempt, dry):
     """One session = one clean-slate exchange with a single pinned identity.
     Returns True if an objective was won, False if the session died without one."""
     transcript, persona, ignores = "", {}, 0
@@ -273,13 +260,13 @@ def run_session(content_client, content_model, scenario, target, headers, brief,
         show_us(plan, "draft")
         return False
 
-    sid = post_api(f"{API}/sessions", headers, {"scenario_id": scenario["id"]})["session_id"]
+    sid = api.create_session(scenario["id"])["session_id"]
     for touch in range(MAX_TOUCHES):
         if plan.get("stop") or not plan.get("body"):
             print("-> agent stops:", plan.get("rationale") or "no message produced")
             return False
         show_us(plan, touch + 1)
-        events = send(sid, plan, target["id"], headers).get("events", [])
+        events = send(api, sid, plan, target["id"]).get("events", [])
         show_them(events)
 
         won = wins_from_events(events)
@@ -303,13 +290,13 @@ def run_session(content_client, content_model, scenario, target, headers, brief,
     return False
 
 
-def run_target(client, model, content_client, content_model, scenario, target, headers, dry):
+def run_target(client, model, content_client, content_model, scenario, target, api, dry):
     print(f"\n=== {target['name']} ({target['id']}) ===")
     brief = research(client, model, target)
     for attempt in range(MAX_SESSIONS):
         if attempt:
             print(f"--- fresh session (attempt {attempt + 1}/{MAX_SESSIONS}) ---")
-        if run_session(content_client, content_model, scenario, target, headers, brief, attempt, dry) or dry:
+        if run_session(content_client, content_model, scenario, target, api, brief, attempt, dry) or dry:
             return
 
 
@@ -321,14 +308,13 @@ def main():
     content_client = OpenAI(base_url=os.environ["AMD_BASE_URL"],     # message content (AMD Token Factory)
                             api_key=os.environ["AMD_API_KEY"])
     content_model = os.environ.get("AMD_MODEL_ID", "DeepSeek-V4-Flash")
-    headers = {"Authorization": f"Bearer {os.environ['TARGET_API_TEAM_KEY']}"}
+    api = APIClient(team_key=os.environ["TARGET_API_TEAM_KEY"])
 
-    scenarios = requests.get(f"{API}/scenarios", headers=headers, timeout=30).json()
-    for scenario in [s for s in scenarios if s.get("kind") == "practice"]:
+    for scenario in [s for s in api.list_scenarios() if s.get("kind") == "practice"]:
          #for target in scenario["targets"]:
          target = scenario["targets"][2]  # only one target per practice scenario
          run_target(client, model, content_client, content_model,
-                       scenario, target, headers, dry)
+                       scenario, target, api, dry)
 
 
 # self-checks: JSON extraction and objective detection from events
