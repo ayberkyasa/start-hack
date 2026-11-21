@@ -26,3 +26,18 @@
 - Consequences: each PR isolates its task's diff; parent merges require checking
   the stack before further work. No automatic merging or force-pushing.
 - Affected tasks: T01–T43.
+
+## D003 — Versioned configuration snapshots
+
+- Date: 2026-11-21
+- Status: adopted for T02.
+- Context: runs need comparable configuration records across restarts and secret rotations.
+- Decision: keep credentials in server settings and build snapshots from a separate
+  immutable public model. Hash schema-versioned, compact, sorted JSON with SHA-256.
+  Include resolved limits, scenario ID, and caller-supplied code revision.
+- Alternatives: hash the raw environment or record only overrides. Both make a
+  run harder to reproduce when defaults or credentials change.
+- Consequences: call sites can persist the exact JSON and digest together. Changes
+  to the snapshot format require versioning. Initial runtime limits are local
+  development defaults. Competition budgets and provider availability still need validation.
+- Affected tasks: T02, T04, T15, T40.

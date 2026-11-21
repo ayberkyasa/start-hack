@@ -11,10 +11,31 @@ and reproducible development commands. The only application endpoint is
 `GET /api/health`, returning `{"status":"ok"}`. FastAPI also exposes its generated
 documentation at `/docs`.
 
-Startup requires no credentials and makes no Target API, model, or research calls.
-The frontend is a static starter screen; it does not launch simulations or fetch
-remote data. Settings and run configuration start in T02. `.env.example` documents
-reserved backend variables; T01 does not load environment files.
+The backend validates configuration at startup. The default mock mode needs no
+credentials. The frontend remains a static starter screen. Startup in every mode
+is local and makes zero external requests.
+
+## Backend configuration
+
+For local overrides, copy `.env.example` to `.env` at the repository root and
+restart `make backend`. That command loads the file through uv. Exported process
+variables take precedence. When running Uvicorn directly, supply the environment
+yourself. Keep credentials in the backend environment.
+
+| Setting | Meaning |
+| --- | --- |
+| `APP_MODE` | `mock` (default), `practice`, or `eval` |
+| `APP_PROVIDER_ID` | Defaults to `mock` in mock mode and `openai` in practice/eval. These are the supported configuration identifiers. |
+| `APP_MODEL_ID` | Defaults to `local-fixture` in mock mode. Practice and eval require an explicit account model ID. |
+| `OPENAI_API_KEY`, `TARGET_API_TEAM_KEY` | Both required for practice/eval. Validation checks presence locally. |
+| `APP_RUN_LIMITS` | JSON object with integer overrides, e.g. `{"wall_seconds":300,"model_calls":8}`. Defaults and bounds for every field are defined in `backend/app/settings.py`. Spend is in US cents. |
+
+The backend exposes a Python snapshot contract through
+`settings.freeze(scenario_id=..., code_revision=...)`. It captures resolved
+configuration and limits in immutable, versioned JSON. The SHA-256 digest covers
+the exact UTF-8 bytes of `canonical_json()`. This lets a future launcher record
+the same configuration across restarts and credential rotations. Setting a mode
+alone never launches a run or authorizes a charge.
 
 ## Prerequisites
 
@@ -58,10 +79,9 @@ make check
 make build
 ```
 
-`make check` compiles the backend Python modules and type-checks TypeScript.
+`make check` compiles the backend Python modules, runs the offline settings tests, and type-checks TypeScript.
 `make build` type-checks and builds the frontend into ignored `frontend/dist/`.
-There is no automated behavior test suite yet. Future tests will use deterministic
-adapters by default; running them must not spend simulation touches.
+The settings tests use fake credentials and run locally.
 
 To inspect the built frontend locally:
 

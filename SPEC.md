@@ -1,6 +1,6 @@
 # Autonomous Simulation Console — Specification
 
-Status: implementation baseline from the planning conversation. T01 introduces the application scaffold; TASKS.md tracks implemented behavior.
+Status: implementation baseline from the planning conversation. T01 provides the application scaffold. T02 adds server settings and versioned snapshots of mode, scenario, provider, model, runtime limits, and code revision. TASKS.md tracks implemented behavior.
 
 ## 1. Purpose and sources
 

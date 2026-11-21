@@ -18,10 +18,12 @@ Each task should be a reviewable change. If a task grows too large, split it int
 - Scope: scaffold only; no runner, settings loader, live integration, or automated behavior test suite yet. No model or Target API calls were made.
 
 ### T02 — Add settings and frozen run configuration
-- [ ] Complete
+- [x] Complete
 - Depends on: T01.
 - Deliver: typed settings, secret redaction, mock/practice/eval modes, configurable model/provider IDs, bounded runtime limits, local-only defaults.
 - Accept: invalid/missing live configuration fails clearly; mock needs no key; configuration snapshots/hash are deterministic and exclude secret values.
+- Completed 2026-11-21. FastAPI validates settings at startup. Mock starts with an empty environment. Practice and eval require a model ID and server-side keys. Versioned, frozen snapshots include limits, scenario, and code revision.
+- Verified with `make check`. Eight offline tests cover startup, invalid live settings, all limit bounds, immutable snapshots, canonical serialization, and credential rotation. Credential validity and external services were not tested.
 
 ### T03 — Define domain and event contracts
 - [ ] Complete
