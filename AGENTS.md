@@ -21,6 +21,14 @@ Build the autonomous revel8 simulation console described in SPEC.md. The applica
 - Do not spawn other agents unless the user explicitly asks for delegation or parallel agent work.
 - Use existing session authorization for necessary actions. Do not repeatedly ask approval for routine reversible coding or tests already in scope.
 
+## Git and stacked pull requests
+
+- Use the exact task ID in lowercase as the branch name: `t01`, `t02`, etc., as requested by the user.
+- T01 branches from `main` and its PR targets `main`. Each subsequent task branches from the preceding task branch and its PR targets that branch, so the diff contains only that task.
+- Verify the current stack before branching, especially if earlier PRs have merged. Do not reset, force-push, rebase, or merge other work without a task-related need and appropriate authorization.
+- After completing the requested task and verification, commit the task changes, push the branch, and open its GitHub PR. Link its parent PR in the description when applicable.
+- Attach the created PR to the chat and report its URL. Stop after the requested task; do not begin the next task automatically.
+
 ## Architectural invariants
 
 - Baseline: React/TypeScript/Vite frontend; Python/FastAPI/Pydantic backend; SQLite; SSE; one backend process with one execution owner per session.

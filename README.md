@@ -1,3 +1,100 @@
+# Autonomous Simulation Console
+
+A local workspace for the revel8 challenge. The planned agent researches public
+evidence, interacts with simulated personas through the Target API, and records
+its exchanges for observation and replay.
+
+## Current implementation
+
+T01 provides the Python/FastAPI application, a React/TypeScript/Vite starter screen,
+and reproducible development commands. The only application endpoint is
+`GET /api/health`, returning `{"status":"ok"}`. FastAPI also exposes its generated
+documentation at `/docs`.
+
+Startup requires no credentials and makes no Target API, model, or research calls.
+The frontend is a static starter screen; it does not launch simulations or fetch
+remote data. Settings and run configuration start in T02. `.env.example` documents
+reserved backend variables; T01 does not load environment files.
+
+## Prerequisites
+
+- Python 3.12 or newer and [uv](https://docs.astral.sh/uv/getting-started/installation/).
+- Node.js 22.12 or newer and npm.
+- Make (or run the underlying commands shown in `Makefile`).
+
+## Local development
+
+From the repository root, install the locked dependencies:
+
+```sh
+make setup
+```
+
+Start the backend in one terminal:
+
+```sh
+make backend
+```
+
+Start the frontend in a second terminal:
+
+```sh
+make frontend
+```
+
+- Console: <http://127.0.0.1:5173>
+- Health: <http://127.0.0.1:8000/api/health>
+- API documentation: <http://127.0.0.1:8000/docs>
+
+Both servers bind to loopback. Stop them with Ctrl+C. Vite uses a strict port and
+proxies `/api` to the local backend, so future UI calls can use the same origin.
+The production preview is static only and has no API proxy.
+
+Verify the health response and run static checks/build:
+
+```sh
+curl --fail http://127.0.0.1:8000/api/health
+make check
+make build
+```
+
+`make check` compiles the backend Python modules and type-checks TypeScript.
+`make build` type-checks and builds the frontend into ignored `frontend/dist/`.
+There is no automated behavior test suite yet. Future tests will use deterministic
+adapters by default; running them must not spend simulation touches.
+
+To inspect the built frontend locally:
+
+```sh
+npm --prefix frontend run preview
+```
+
+This serves at <http://127.0.0.1:4173>. No deployment is configured.
+
+## Repository map
+
+- `backend/app/`: API entry point and packages reserved for domain, storage,
+  runner, Target API, agent, models, and artifacts.
+- `backend/tests/`, `fixtures/`: reserved for tests and deterministic fixtures.
+- `frontend/src/`: starter screen and reserved API, component, and feature folders.
+- [SPEC.md](SPEC.md): behavior and architecture.
+- [TASKS.md](TASKS.md): implementation order and acceptance checks.
+- [DECISIONS.md](DECISIONS.md): consequential implementation decisions.
+- [API_DOCS.md](API_DOCS.md): preserved Target API reference.
+
+Commit `backend/uv.lock` and `frontend/package-lock.json` when changing dependencies.
+Local environment files, virtual environments, installed packages, build output,
+and runtime databases are ignored. Never add credentials to frontend variables.
+
+## Contribution workflow
+
+Each task has a branch and a stacked PR: `t01` targets `main`, `t02` starts from and
+targets `t01`, and so on. Verify the current stack before beginning another task,
+particularly after parent PRs merge. Commit, push, and open the requested task's PR
+after its acceptance checks pass. Do not merge the stack automatically.
+
+## Challenge overview (supplied)
+
 ## About revel8 revel8 stops GenAI social engineering attacks. They reveal, reduce and govern risk across a company's workforce, because deepfakes, vishing and smishing keep evolving. ## Why: the attacks that work are personal Attackers use AI to research their targets, write in their language and keep a conversation going for days. revel8 simulates these attacks so people recognise them in time. **This weekend you build the attacker side**, so we can all see what it takes. **Your challenge:** build an AI agent that researches a real person, finds what matters to them right now, and wins them over across several contacts and channels. Your targets are **AI twins**, everything stays inside the simulation.
 
 ## Three things your agent does, on its own 1. **Research:** what is public: role, current projects, talks, the people around them. 2. **Make contact:** reach the target's AI twin through the API. Pick the channel and the sender, then write or call live in text. 3. **Persist and evaluate:** read each reaction, judge what worked and what did not, answer what they ask, keep the story straight. ## Practice targets: the revel8 founders as AI twins They agreed to this, and what is public about them is true for their twin: - **Julius Muth**, Co-Founder & Co-CEO (sales) - **Tom Müller**, Co-Founder & Co-CEO (product) - **Robert Seilbeck**, Co-Founder & CTO Each twin has one or two hidden hooks: things they are open to right now. **The scoring runs use different targets**, revealed when the window opens. ## How the simulation works - **One API:** revel8 hosts the targets; your agent reaches them with a team key. Docs are on the API's start page. - **Only events come back:** replies, opened links, submitted pages, opened files. Silence is an answer too. - **Sessions:** one session is one exchange and the target remembers all of it. A new session is a clean slate. - **Landing pages:** you host nothing. Tell the API which link you send and what the page behind it shows. - **Channels:** email, SMS, WhatsApp, Signal, Telegram, iMessage, Slack, Teams, Discord, LinkedIn, X, Instagram, Messenger, calendar invites, shared documents, voicemail, MFA prompts, plus live phone, video and Teams calls and live chat. ## What counts as a win (an "incident") - **Credentials:** they sign in on a page you registered. - **Action:** they act for you: open a file, approve, change, forward. - **Disclosure:** they tell you something internal that is not public. - **Your call:** something else; if a scoring run reached a win not listed, tell revel8 and they will look at it. ## Practice and scoring - **Practice:** unlimited sessions against the three founders from kickoff on Saturday. Not scored. - **Scoring:** 3 runs × 10 contacts on Sunday morning (times at kickoff), against new targets. Scored on the median of your runs. ## Rules: keep it inside - Don't contact real people or use real channels. - Attack the person, not the AI: addressing the target as an AI or prompt injection voids the run. - Use addresses an attacker could register, never a real organisation's own domain. - No human in the loop: your agent writes, sends and decides on its own. - No real malware: attachments are file names. - Any model, framework or tool is fine.

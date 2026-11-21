@@ -1,6 +1,6 @@
 # Autonomous Simulation Console — Specification
 
-Status: implementation baseline from the planning conversation. No application code is implemented yet.
+Status: implementation baseline from the planning conversation. T01 introduces the application scaffold; TASKS.md tracks implemented behavior.
 
 ## 1. Purpose and sources
 
@@ -13,7 +13,7 @@ Repository sources:
 - [Challenge PDF](docs/revel8-Agentic-Social-Engineer-Challenge.pdf): rules and deliverables.
 - [Scoring rubric PDF](docs/revel8-Agentic-Social-Engineer-Scoring-Rubric.pdf): detailed scoring.
 - [TASKS.md](TASKS.md): ordered implementation backlog and acceptance checks.
-- [DECISIONS.md](DECISIONS.md): future decision records; intentionally empty initially.
+- [DECISIONS.md](DECISIONS.md): decision records, including the T01 toolchain and stacked-PR workflow.
 
 Use the detailed rubric for scoring rather than the overview's simplified “median” description. Resolve actual contradictions against organizer guidance; do not invent an API behavior or scoring rule. API_DOCS.md remains the preserved external reference.
 

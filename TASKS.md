@@ -1,18 +1,21 @@
 # Implementation Tasks
 
-All tasks are initially unstarted. Work in dependency order, one requested task at a time. Check a task only after its acceptance criteria are verified; record a short completion note with the checks performed. Do not treat mock verification as live verification.
+Work in dependency order, one requested task at a time. Check a task only after its acceptance criteria are verified; record a short completion note with the checks performed. Do not treat mock verification as live verification.
 
-SPEC.md defines behavior; API_DOCS.md defines the remote contract. DECISIONS.md is intentionally empty until an actual decision is recorded. Proposed defaults may be refined through explicit decision records and corresponding spec updates.
+SPEC.md defines behavior; API_DOCS.md defines the remote contract. DECISIONS.md records consequential choices. Proposed defaults may be refined through explicit decision records and corresponding spec updates.
 
 Each task should be a reviewable change. If a task grows too large, split it into stable child IDs and keep its dependencies explicit. No task authorizes live eval contacts merely by appearing in this backlog.
 
 ## Milestone A — Contracts and durable foundations
 
 ### T01 — Scaffold the application
-- [ ] Complete
+- [x] Complete
 - Depends on: none.
 - Deliver: backend/frontend directories from SPEC.md, package manifests and lockfiles, development scripts, ignore rules, example environment file without secrets, basic run instructions.
 - Accept: backend health endpoint and frontend shell start locally; documented commands work; no live calls occur on startup.
+- Completed 2026-11-21: added FastAPI `/api/health`, React/Vite starter screen, package layout, uv/npm lockfiles, Makefile, ignore rules, and setup documentation. Recorded D001/D002 in DECISIONS.md and stacked-PR instructions in AGENTS.md.
+- Verified: `make setup`, `make check`, `make build`; local backend health and Vite `/api` proxy return `{"status":"ok"}`; built preview serves HTML. Browser inspection at 1280 px and 390 px found no horizontal overflow or console errors. A guarded ASGI smoke check passes import/startup/health/shutdown with outbound sockets blocked.
+- Scope: scaffold only; no runner, settings loader, live integration, or automated behavior test suite yet. No model or Target API calls were made.
 
 ### T02 — Add settings and frozen run configuration
 - [ ] Complete

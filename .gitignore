@@ -1,0 +1,30 @@
+# Local secrets (examples are safe to commit)
+.env
+.env.*
+!.env.example
+
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# JavaScript and build output
+node_modules/
+dist/
+*.tsbuildinfo
+
+# Local runtime data
+data/
+*.sqlite
+*.sqlite3
+*.sqlite-wal
+*.sqlite-shm
+*.sqlite3-wal
+*.sqlite3-shm
+*.log
+.DS_Store
