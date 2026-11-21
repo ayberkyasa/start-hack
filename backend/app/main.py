@@ -11,8 +11,10 @@ from app.storage.database import open_database
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    app.state.settings = load_settings()
-    with open_database(app.state.settings.database_path) as repository:
+    settings = load_settings()
+    app.state.settings = settings
+    secrets = tuple(key for key in (settings.openai_api_key, settings.target_api_team_key) if key)
+    with open_database(settings.database_path, secrets=secrets) as repository:
         app.state.repository = repository
         try:
             yield

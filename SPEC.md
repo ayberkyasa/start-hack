@@ -1,6 +1,6 @@
 # Autonomous Simulation Console — Specification
 
-Status: implementation baseline from the planning conversation. T01 provides the application scaffold. T02 adds server settings and versioned snapshots of mode, scenario, provider, model, runtime limits, and code revision. T03 defines the typed domain records and transcript formats. T04 persists those records in a versioned local SQLite database. TASKS.md tracks implemented behavior.
+Status: implementation baseline from the planning conversation. T01 provides the application scaffold. T02 adds server settings and versioned snapshots of mode, scenario, provider, model, runtime limits, and code revision. T03 defines the typed domain records and transcript formats. T04 persists those records in a versioned local SQLite database. T05 adds the append-only timeline and redacted response archive. TASKS.md tracks implemented behavior.
 
 ## 1. Purpose and sources
 
@@ -232,7 +232,7 @@ Action statuses include prepared, in_flight, outcome_unknown, succeeded, rejecte
 
 For messages, conversation starts, and turns, reuse the original key and exact body on retries. A network timeout is an unknown outcome. Do not ask the model to regenerate the action or continue the story until resolved. Use bounded exponential backoff with jitter and honor Retry-After if supplied.
 
-Persist the complete response, normalized events, budget updates, and next checkpoint atomically. Deduplicate remote events by their remote ID and local synthetic observations by their action/observation identity. Recovery must handle crashes before send, after remote acceptance, after response receipt, and after commit but before UI publication.
+Persist the redacted response, normalized events, budget updates, and next checkpoint atomically. Timeline sequence numbers are database-wide commit-order cursors. A reader filters by run and requests rows strictly after its last returned sequence. Deduplicate remote events by their remote ID and local synthetic observations by their action/observation identity. Recovery must handle crashes before send, after remote acceptance, after response receipt, and after commit but before UI publication.
 
 The documented idempotency guarantee does not cover every endpoint. Session creation, asset upload, page replacement, and closure need operation-specific reconciliation. Persist creation intent, use session listing and known IDs where unambiguous, and block rather than create another eval session when attribution is uncertain. Never invent a conversation lookup endpoint. Local asset hashes help reuse known uploads but do not prove an unacknowledged upload failed.
 

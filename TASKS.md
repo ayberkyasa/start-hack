@@ -42,10 +42,12 @@ Each task should be a reviewable change. If a task grows too large, split it int
 - Verified with `make check`. Six storage tests use temporary files to exercise all record families across reopen, ownership collisions, atomic rollback, stale updates, failed migrations, process exit, and transaction boundaries during an async wait. No live services used.
 
 ### T05 — Implement the append-only timeline
-- [ ] Complete
+- [x] Complete
 - Depends on: T04.
 - Deliver: ordered event append/query, stable local sequence, remote-ID deduplication, synthetic-observation deduplication, redacted raw-response storage.
 - Accept: reprocessing a response does not duplicate timeline entries; pagination has no gaps; action/checkpoint/event changes can commit atomically.
+- Completed 2026-11-21. Added migration 002, a run-scoped cursor reader, remote and synthetic deduplication, a redacted response archive keyed by attempt, and one transactional batch for history and lifecycle updates.
+- Verified with `make check`. Six timeline tests cover v1 backfill, replay after reopen, overlapping remote events, pagination during append, redaction, and atomic rollback. All checks used local fixtures.
 
 ### T06 — Build deterministic Target API fixtures
 - [ ] Complete

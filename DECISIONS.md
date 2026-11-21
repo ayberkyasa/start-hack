@@ -75,3 +75,22 @@
   releases the ownership lock on process exit. Use a local filesystem and the
   same database path across restarts. Schema changes require a migration.
 - Affected tasks: T04, T05.
+
+## D006 — Timeline cursors and response identity
+
+- Date: 2026-11-21
+- Status: adopted for T05.
+- Context: saved receipts can overlap or arrive again after restart. Earlier
+  databases already contain typed history without public cursors.
+- Decision: assign a database-wide integer sequence at insertion. Project a
+  receipt before its nested events in wire order. Within a run, use the remote
+  event ID for remote entries, the message or conversation ID for receipts, and
+  the conversation ID plus turn count for turns. Decisions and assessments keep
+  their record IDs. A repeated identity retains its first timeline entry.
+- Alternatives: order by reported timestamps, use offset pagination, or allocate
+  a counter per run. The database-wide cursor also works when timestamps tie.
+- Consequences: per-run sequence numbers may skip numbers. Readers resume
+  strictly after their last cursor. Migration 002 backfills T04 history in
+  stored row order. Redacted raw responses remain separate and addressable by
+  attempt ID.
+- Affected tasks: T05, T17.

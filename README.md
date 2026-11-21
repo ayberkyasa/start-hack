@@ -50,6 +50,21 @@ rolls back. Updates to lifecycle records check the previously read version to
 detect stale writes. Each repository call finishes its transaction before
 returning to its caller.
 
+### Reading saved history
+
+Use `repository.timeline(run_id, after=0, limit=100)` to read committed entries.
+Pass the last returned sequence as `after` to resume, including after a restart.
+Sequences are database-wide, so another run can account for numbers between two
+entries. An empty page means the reader has caught up. A message receipt with
+`event_count=0` records a response with no visible events.
+
+`repository.commit(..., updates=..., response=...)` saves history, an optional
+redacted JSON response, and conditional lifecycle updates in one transaction.
+Read the diagnostic body with `repository.raw_response(attempt_id)`. The response
+filter removes headers and recognized credential fields and masks configured key
+values in text before storage. The timeline and response reader are Python
+repository interfaces.
+
 ## Prerequisites
 
 - Python 3.12 or newer and [uv](https://docs.astral.sh/uv/getting-started/installation/).
