@@ -142,12 +142,11 @@ Milestone gate: start one mock run, watch an autonomous follow-up, refresh, and 
 ## Milestone D — Evidence, memory, and autonomous planning
 
 ### T19 — Add the model-provider contract and OpenAI adapter
-- [ ] Complete
+- [x] Complete
 - Depends on: T02, T03, T04.
 - Deliver: structured request/result interface, configurable model IDs, refusal/incomplete/error handling, bounded provider retries, token/latency/cost records.
 - Accept: provider fixtures cover all result variants and frozen fallback order; unknown cost is not zero; failures cannot mutate a submitted action. Verify current official API contracts during implementation.
-
-Partial progress (2026-11-21): T04’s SQLite usage record supports explicit provider outcomes and missing measurements. Existing records without an outcome remain readable. Provider integration and retry/fallback checks remain open.
+- Completed 2026-11-21. Added the vendor-neutral `ModelProvider` contract with `ModelRequest`/`ModelResult`, outcome normalization (completed/refused/incomplete/error), `run_fallback` over a frozen fallback order, `MockProvider`, and a stdlib `OpenAIProvider` hitting `POST /v1/chat/completions` with strict structured output. Measured latency (from `openai-processing-ms`), tokens, and estimated cost with an explicit pricing version; an unknown price stays `None`, never zero. Bounded retries only cover transient transport/server errors; refusal/incomplete are treated as final answers and never retried. Added `APP_MODEL_FALLBACKS` (frozen, snapshot-hashed, live modes only). Verified with `make check`: 43 backend tests pass, including five new provider tests covering fallback ordering, refusal-not-retried, all-error exhaustion, unknown-cost preservation, and that a failed call cannot mutate a submitted request. Contract rechecked against current OpenAI docs (2026-11-21): `/v1/chat/completions`, `response_format` json_schema strict, `message.refusal`, `finish_reason`, `usage.prompt_tokens`/`completion_tokens`. Live provider behavior is not exercised; cost rates are snapshotted and not yet benchmarked against the account.
 
 ### T20 — Implement read-only research and evidence storage
 - [ ] Complete

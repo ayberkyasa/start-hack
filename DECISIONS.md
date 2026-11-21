@@ -1,3 +1,29 @@
+# Design decisions
+
+## D008 — Frozen model fallback order
+
+- Date: 2026-11-21
+- Status: adopted for T19.
+- Context: retries must never change which provider/model the run uses, and the
+  spec freezes fallback order before a scored run (SPEC 9). Refusals and
+  incomplete outputs are real final answers, not transport retries; only
+  transient transport/server errors are retried, and only on another frozen
+  candidate.
+- Decision: extend the frozen run configuration with a `fallbacks` tuple of
+  `ProviderSelection` (provider/model pairs) parsed from `APP_MODEL_FALLBACKS`,
+  snapshot-hashed at launch and rejected in mock mode. The provider contract
+  returns a normalized `ModelResult`; a failed call cannot mutate a submitted
+  request. An unknown price is recorded as `None` (never zero) alongside an
+  explicit pricing version.
+- Alternatives: retry the same model repeatedly, or let the planner choose a
+  fallback at runtime. Both would let mid-run conditions change the plan, which
+  is frozen by design.
+- Consequences: the run configuration hash now includes the fallback order, so
+  snapshot comparisons and versioned replays are affected. Cost rates are
+  snapshotted per model family in the OpenAI adapter and must be rechecked and
+  benchmarked before real use.
+- Affected tasks: T19, T23, T40.
+
 ## D001 — Local development toolchain
 
 - Date: 2026-11-21

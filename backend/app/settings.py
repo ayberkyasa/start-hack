@@ -45,10 +45,20 @@ class RunLimits(FrozenModel):
     retries: int = Field(default=2, ge=0, le=10)
 
 
+class ProviderSelection(FrozenModel):
+    """One frozen provider/model candidate in the fallback order."""
+
+    provider_id: Literal["mock", "openai"]
+    model_id: Identifier
+
+
 class RunConfig(FrozenModel):
     mode: Literal["mock", "practice", "eval"]
     provider_id: Literal["mock", "openai"]
     model_id: Identifier
+    # Fallback order is frozen with the run so retries never change the plan
+    # after launch. Each entry is a provider/model pair tried in order.
+    fallbacks: tuple[ProviderSelection, ...] = ()
     limits: RunLimits
 
     @model_validator(mode="after")
@@ -57,6 +67,8 @@ class RunConfig(FrozenModel):
             raise ValueError("APP_PROVIDER_ID must match APP_MODE (mock or live)")
         if self.mode == "eval" and self.limits.contacts > 10:
             raise ValueError("APP_RUN_LIMITS.contacts exceeds the eval maximum of 10")
+        if self.fallbacks and self.mode == "mock":
+            raise ValueError("APP_MODEL_FALLBACKS is only meaningful for live providers")
         return self
 
 
@@ -98,6 +110,19 @@ class Settings(FrozenModel):
         )
 
 
+def _load_fallbacks(raw: str | None) -> tuple[ProviderSelection, ...]:
+    """Parse the frozen fallback order, or return empty for the default path."""
+    if not raw:
+        return ()
+    try:
+        value = json.loads(raw)
+    except ValueError as error:
+        raise ValueError("APP_MODEL_FALLBACKS must be a JSON array") from error
+    if not isinstance(value, list):
+        raise ValueError("APP_MODEL_FALLBACKS must be a JSON array")
+    return tuple(ProviderSelection.model_validate(item) for item in value)
+
+
 def load_settings(environ: Mapping[str, str] | None = None) -> Settings:
     env = os.environ if environ is None else environ
     database_path = env.get("APP_DATABASE_PATH", str(DEFAULT_DATABASE))
@@ -123,6 +148,7 @@ def load_settings(environ: Mapping[str, str] | None = None) -> Settings:
             "mode": mode,
             "provider_id": provider,
             "model_id": env.get("APP_MODEL_ID", "local-fixture" if mode == "mock" else ""),
+            "fallbacks": _load_fallbacks(env.get("APP_MODEL_FALLBACKS")),
             "limits": limits,
         })
         return Settings.model_validate({
@@ -132,7 +158,8 @@ def load_settings(environ: Mapping[str, str] | None = None) -> Settings:
             "target_api_team_key": env.get("TARGET_API_TEAM_KEY"),
         })
     except ValidationError as error:
-        fields = {"mode": "APP_MODE", "provider_id": "APP_PROVIDER_ID", "model_id": "APP_MODEL_ID"}
+        fields = {"mode": "APP_MODE", "provider_id": "APP_PROVIDER_ID",
+                  "model_id": "APP_MODEL_ID", "fallbacks": "APP_MODEL_FALLBACKS"}
         problems = []
         for detail in error.errors(include_input=False, include_url=False):
             label = fields.get(next(iter(detail["loc"]), None))
