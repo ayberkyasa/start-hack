@@ -41,3 +41,20 @@
   to the snapshot format require versioning. Initial runtime limits are local
   development defaults. Competition budgets and provider availability still need validation.
 - Affected tasks: T02, T04, T15, T40.
+
+## D004 — Transcript compatibility and evidence provenance
+
+- Date: 2026-11-21
+- Status: adopted for T03.
+- Context: a remote response may gain fields or event types between practice and
+  eval. A replay reader also needs to distinguish API evidence from local analysis.
+- Decision: use separate local record types for observations, decisions, and
+  evidence-linked assessments. Validate required fields on known remote events.
+  Project unknown event types to their original type and IDs. Keep additional
+  remote fields outside the typed projection.
+- Alternatives: reject any wire change, or expose the entire remote payload in
+  every transcript entry.
+- Consequences: additive wire changes can be read without guessing their meaning.
+  Future raw-response storage must retain the redacted source independently of
+  these projections. Serializing a projection reconstructs only its documented fields.
+- Affected tasks: T03, T05, T17.

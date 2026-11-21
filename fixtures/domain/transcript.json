@@ -1,0 +1,75 @@
+{
+  "actions": [
+    {
+      "action_id": "action-1", "run_id": "run-1", "session_id": "session-1",
+      "operation": "message", "status": "succeeded", "channel": "email",
+      "target_id": "reader-1", "request_body_ref": "body-1"
+    },
+    {
+      "action_id": "action-2", "run_id": "run-1", "session_id": "session-1",
+      "operation": "message", "status": "succeeded", "channel": "email",
+      "target_id": "reader-1", "request_body_ref": "body-2"
+    },
+    {
+      "action_id": "action-3", "run_id": "run-1", "session_id": "session-1",
+      "operation": "conversation", "status": "succeeded", "channel": "live_chat",
+      "target_id": "reader-1", "request_body_ref": "body-3"
+    },
+    {
+      "action_id": "action-4", "run_id": "run-1", "session_id": "session-1",
+      "conversation_id": "call-1", "operation": "turn", "status": "succeeded",
+      "channel": "live_chat", "target_id": "reader-1", "request_body_ref": "body-4"
+    }
+  ],
+  "history": [
+    {
+      "kind": "observation", "record_id": "obs-1", "run_id": "run-1",
+      "action_id": "action-1", "recorded_at": "2026-01-01T09:00:00Z",
+      "content": {"kind": "message", "response": {"message_id": "msg-1", "touches_used": 1, "events": []}}
+    },
+    {
+      "kind": "observation", "record_id": "obs-2", "run_id": "run-1",
+      "action_id": "action-2", "recorded_at": "2026-01-01T09:01:00Z",
+      "content": {
+        "kind": "message",
+        "response": {
+          "message_id": "msg-2", "touches_used": 2, "api_revision": "fixture",
+          "events": [
+            {"id": "evt-1", "type": "reply", "channel": "sms", "in_reply_to": "msg-2", "body": "The reading room opens at ten.", "new_attribute": true},
+            {"id": "evt-2", "type": "fixture.unrecognized", "message_id": "msg-2", "note": "Future event shape"}
+          ]
+        }
+      }
+    },
+    {
+      "kind": "observation", "record_id": "obs-3", "run_id": "run-1",
+      "action_id": "action-3", "recorded_at": "2026-01-01T09:02:00Z",
+      "content": {"kind": "greeting", "response": {"conversation_id": "call-1", "status": "answered", "touches_used": 3, "persona_says": "Hello, reading room here."}}
+    },
+    {
+      "kind": "observation", "record_id": "obs-4", "run_id": "run-1",
+      "action_id": "action-4", "recorded_at": "2026-01-01T09:03:00Z",
+      "content": {
+        "kind": "turn", "conversation_id": "call-1",
+        "response": {
+          "turns_used": 1, "ended": true, "persona_says": "See you at ten.",
+          "events": [
+            {"id": "evt-3", "type": "link.opened", "conversation_id": "call-1", "url": "https://library.example/hours"},
+            {"id": "evt-4", "type": "page.submitted", "conversation_id": "call-1", "page_id": "page-1", "fields": ["opening_hour"]},
+            {"id": "evt-5", "type": "attachment.opened", "conversation_id": "call-1", "filename": "hours.pdf"}
+          ]
+        }
+      }
+    },
+    {
+      "kind": "assessment", "record_id": "assessment-1", "run_id": "run-1",
+      "recorded_at": "2026-01-01T09:04:00Z", "evidence_ids": ["obs-2", "obs-4"],
+      "summary": "Both replies appear to refer to the same opening time."
+    },
+    {
+      "kind": "decision", "record_id": "decision-1", "run_id": "run-1",
+      "recorded_at": "2026-01-01T09:05:00Z", "evidence_ids": ["obs-4"],
+      "summary": "Closed the transcript after the call ended."
+    }
+  ]
+}

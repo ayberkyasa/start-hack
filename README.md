@@ -79,9 +79,10 @@ make check
 make build
 ```
 
-`make check` compiles the backend Python modules, runs the offline settings tests, and type-checks TypeScript.
+`make check` compiles the backend Python modules, runs the offline backend tests, and type-checks TypeScript.
 `make build` type-checks and builds the frontend into ignored `frontend/dist/`.
-The settings tests use fake credentials and run locally.
+The settings tests use fake credentials. The domain tests read the synthetic library
+transcript in `fixtures/domain/transcript.json`. Both suites run offline.
 
 To inspect the built frontend locally:
 
@@ -93,9 +94,9 @@ This serves at <http://127.0.0.1:4173>. No deployment is configured.
 
 ## Repository map
 
-- `backend/app/`: API entry point and packages reserved for domain, storage,
+- `backend/app/`: API entry point, typed domain records, and packages for storage,
   runner, Target API, agent, models, and artifacts.
-- `backend/tests/`, `fixtures/`: reserved for tests and deterministic fixtures.
+- `backend/tests/`, `fixtures/`: offline tests and deterministic fixtures.
 - `frontend/src/`: starter screen and reserved API, component, and feature folders.
 - [SPEC.md](SPEC.md): behavior and architecture.
 - [TASKS.md](TASKS.md): implementation order and acceptance checks.

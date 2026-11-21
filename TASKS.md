@@ -26,10 +26,12 @@ Each task should be a reviewable change. If a task grows too large, split it int
 - Verified with `make check`. Eight offline tests cover startup, invalid live settings, all limit bounds, immutable snapshots, canonical serialization, and credential rotation. Credential validity and external services were not tested.
 
 ### T03 — Define domain and event contracts
-- [ ] Complete
+- [x] Complete
 - Depends on: T02.
 - Deliver: typed run/session/action/attempt/conversation/observation/decision/assessment/artifact models; event discriminators; phase and terminal-reason definitions.
 - Accept: fixtures cover empty observations, cross-channel replies, call greetings/turns, unknown fields, and the distinction between observed evidence and assessment.
+- Completed 2026-11-21. Added typed history, run, session, action, attempt, conversation, and artifact records plus projections of message, greeting, and turn responses.
+- Verified with `make check` using the synthetic library transcript. Six domain tests cover the T03 fixture cases, unknown event types, malformed known events, and JSON round trips. No live API verification.
 
 ### T04 — Establish SQLite persistence and migrations
 - [ ] Complete

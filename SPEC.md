@@ -1,6 +1,6 @@
 # Autonomous Simulation Console — Specification
 
-Status: implementation baseline from the planning conversation. T01 provides the application scaffold. T02 adds server settings and versioned snapshots of mode, scenario, provider, model, runtime limits, and code revision. TASKS.md tracks implemented behavior.
+Status: implementation baseline from the planning conversation. T01 provides the application scaffold. T02 adds server settings and versioned snapshots of mode, scenario, provider, model, runtime limits, and code revision. T03 defines the typed domain records and transcript formats. TASKS.md tracks implemented behavior.
 
 ## 1. Purpose and sources
 
@@ -251,6 +251,8 @@ Suggested records:
 | TimelineEvent | Monotonic sequence, event type, timestamp, run/action references, payload |
 | ArtifactVersion / Asset | HTML/text, URL, fields, content hash, local asset, remote ID, registration status |
 | ModelUsage | Provider, model, tokens, duration, estimated cost, pricing version, failure |
+
+For transcript readers, the local history record identifies an observation, decision, or assessment. Observations preserve the response shape for a message, opening greeting, or turn. An empty event list is valid; a missing required event list is a contract error. For an unfamiliar remote event type, the transcript retains its type, ID, and documented correlation fields. Additional wire fields belong in the separate redacted raw response.
 
 Use migrations and constraints. SQLite transactions are short and never held across network calls. Preserve raw bodies with secrets redacted; do not store authorization headers in diagnostics or exports.
 
