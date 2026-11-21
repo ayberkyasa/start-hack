@@ -58,3 +58,20 @@
   Future raw-response storage must retain the redacted source independently of
   these projections. Serializing a projection reconstructs only its documented fields.
 - Affected tasks: T03, T05, T17.
+
+## D005 — Local SQLite repository and process ownership
+
+- Date: 2026-11-21
+- Status: adopted for T04.
+- Context: the console must reopen saved history and reject a second backend
+  using the same data file. Existing domain records already define the JSON layout.
+- Decision: use Python's sqlite3 module and numbered SQL migrations. Persist
+  typed JSON and use generated relational keys for ownership and foreign keys.
+  Keep insert batches and conditional lifecycle updates in synchronous transactions.
+  Hold a committed SQLite exclusive lock in a sibling file for the backend lifetime.
+- Alternatives: an ORM with separate mapped classes, a PID file requiring stale
+  lock cleanup, or an exclusive lock on the data file itself.
+- Consequences: the database stays readable while its backend is idle. The OS
+  releases the ownership lock on process exit. Use a local filesystem and the
+  same database path across restarts. Schema changes require a migration.
+- Affected tasks: T04, T05.

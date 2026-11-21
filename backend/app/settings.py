@@ -4,6 +4,7 @@ import hashlib
 import json
 import os
 from collections.abc import Mapping
+from pathlib import Path
 from typing import Annotated, Literal, Self
 
 from pydantic import (
@@ -71,8 +72,12 @@ class RunSnapshot(RunConfig):
         return hashlib.sha256(self.canonical_json().encode("utf-8")).hexdigest()
 
 
+DEFAULT_DATABASE = Path(__file__).resolve().parents[2] / "data" / "console.sqlite3"
+
+
 class Settings(FrozenModel):
     run: RunConfig
+    database_path: Path = DEFAULT_DATABASE
     openai_api_key: SecretStr | None = Field(default=None, exclude=True, repr=False)
     target_api_team_key: SecretStr | None = Field(default=None, exclude=True, repr=False)
 
@@ -95,6 +100,9 @@ class Settings(FrozenModel):
 
 def load_settings(environ: Mapping[str, str] | None = None) -> Settings:
     env = os.environ if environ is None else environ
+    database_path = env.get("APP_DATABASE_PATH", str(DEFAULT_DATABASE))
+    if not database_path.strip():
+        raise ValueError("APP_DATABASE_PATH requires a file path")
     mode = env.get("APP_MODE", "mock")
     provider = env.get("APP_PROVIDER_ID", "mock" if mode == "mock" else "openai")
     try:
@@ -119,6 +127,7 @@ def load_settings(environ: Mapping[str, str] | None = None) -> Settings:
         })
         return Settings.model_validate({
             "run": run,
+            "database_path": database_path,
             "openai_api_key": env.get("OPENAI_API_KEY"),
             "target_api_team_key": env.get("TARGET_API_TEAM_KEY"),
         })

@@ -24,6 +24,7 @@ yourself. Keep credentials in the backend environment.
 
 | Setting | Meaning |
 | --- | --- |
+| `APP_DATABASE_PATH` | Optional SQLite file path. Defaults to `data/console.sqlite3` in the repository. Relative overrides resolve from the backend process working directory. |
 | `APP_MODE` | `mock` (default), `practice`, or `eval` |
 | `APP_PROVIDER_ID` | Defaults to `mock` in mock mode and `openai` in practice/eval. These are the supported configuration identifiers. |
 | `APP_MODEL_ID` | Defaults to `local-fixture` in mock mode. Practice and eval require an explicit account model ID. |
@@ -36,6 +37,18 @@ configuration and limits in immutable, versioned JSON. The SHA-256 digest covers
 the exact UTF-8 bytes of `canonical_json()`. This lets a future launcher record
 the same configuration across restarts and credential rotations. Setting a mode
 alone never launches a run or authorizes a charge.
+
+### Local database
+
+Backend startup creates the database directory and applies pending migrations.
+Use one backend process per database on a local filesystem. SQLite holds the
+ownership lock in a sibling `.lock` file and releases it when the process exits.
+The file stays on disk between runs. Leave it in place while the backend runs.
+
+The repository writes a batch of records in one transaction. A failed batch
+rolls back. Updates to lifecycle records check the previously read version to
+detect stale writes. Each repository call finishes its transaction before
+returning to its caller.
 
 ## Prerequisites
 
@@ -82,7 +95,8 @@ make build
 `make check` compiles the backend Python modules, runs the offline backend tests, and type-checks TypeScript.
 `make build` type-checks and builds the frontend into ignored `frontend/dist/`.
 The settings tests use fake credentials. The domain tests read the synthetic library
-transcript in `fixtures/domain/transcript.json`. Both suites run offline.
+transcript in `fixtures/domain/transcript.json`. Storage tests use temporary on-disk
+databases and a separate process to check ownership. All suites run offline.
 
 To inspect the built frontend locally:
 

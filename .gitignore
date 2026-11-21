@@ -28,3 +28,8 @@ data/
 *.sqlite3-shm
 *.log
 .DS_Store
+
+*.sqlite.lock
+*.sqlite3.lock
+*.sqlite-journal
+*.sqlite3-journal

@@ -34,10 +34,12 @@ Each task should be a reviewable change. If a task grows too large, split it int
 - Verified with `make check` using the synthetic library transcript. Six domain tests cover the T03 fixture cases, unknown event types, malformed known events, and JSON round trips. No live API verification.
 
 ### T04 — Establish SQLite persistence and migrations
-- [ ] Complete
+- [x] Complete
 - Depends on: T03.
 - Deliver: migrations/repositories for runs, actions, attempts, events, conversations, evidence/memory, artifacts, and model usage; constraints and single-process ownership guard.
 - Accept: state survives reopen; duplicate session ownership is rejected; migrations initialize a clean database; no database transaction spans a network wait.
+- Completed 2026-11-21. Backend startup opens the local repository, acquires exclusive process ownership, and applies atomic schema migrations. SQLite enforces one run per session and one session per run.
+- Verified with `make check`. Six storage tests use temporary files to exercise all record families across reopen, ownership collisions, atomic rollback, stale updates, failed migrations, process exit, and transaction boundaries during an async wait. No live services used.
 
 ### T05 — Implement the append-only timeline
 - [ ] Complete

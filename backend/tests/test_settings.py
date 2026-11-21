@@ -2,6 +2,8 @@ import hashlib
 import json
 import os
 import unittest
+from tempfile import TemporaryDirectory
+from pathlib import Path
 from unittest.mock import patch
 
 from pydantic import ValidationError
@@ -98,8 +100,10 @@ class SettingsTests(unittest.TestCase):
 
 class StartupTests(unittest.IsolatedAsyncioTestCase):
     async def test_startup_validates_before_serving_without_network(self):
+        directory = self.enterContext(TemporaryDirectory())
         with patch("socket.socket.connect", side_effect=AssertionError("unexpected network call")):
             for env in ({}, live_env("eval")):
+                env = {**env, "APP_DATABASE_PATH": str(Path(directory) / "console.sqlite3")}
                 with patch.dict(os.environ, env, clear=True):
                     async with app.router.lifespan_context(app):
                         self.assertEqual(app.state.settings, load_settings(env))
