@@ -121,7 +121,8 @@ A scenario is a company with people you may target, plus objectives.
   "scenario_id": "practice",
   "touch_budget": 30,
   "touches_used": 0,
-  "status": "active"
+  "status": "active",
+  "story_time": null
 }
 ```
 
@@ -182,7 +183,11 @@ The response is the reaction:
       "type": "page.submitted",
       "message_id": "m_3fa2b81c07",
       "page_id": "p_91c0d2aa4e",
-      "fields": ["email", "password"]
+      "fields": ["email", "password"],
+      "values": {
+        "email": "julius@revel8.ai",
+        "password": "(entered, not shown)"
+      }
     },
     {
       "id": "e_9",
@@ -206,6 +211,7 @@ The response is the reaction:
 | `subject`     | no       | For channels that have one.                                                                                      |
 | `body`        | yes      | Plain text or HTML, see below.                                                                                   |
 | `attachments` | no       | See "Files and images".                                                                                          |
+| `sent_at`     | no       | When this is sent, in your story. See "Time".                                                                    |
 
 - Everything in `from` is a claim. The person sees it as that channel would show it
   and makes up their own mind.
@@ -214,6 +220,38 @@ The response is the reaction:
   anyway.
 - Plain text is fine and often the better choice. See "How the look is judged": the
   look counts in your score, but the person reacts to your words, sender and links.
+
+## Time
+
+By default the people know today's date and nothing else about time: your contacts
+simply follow one another. If your attack plays over hours or days, say so with
+`sent_at`. It works on messages, on `conversations` (when the phone rings) and on
+`turns` (each thing you say).
+
+```json
+{
+  "to": "julius",
+  "channel": "email",
+  "sent_at": "2026-11-23T09:14:00+01:00",
+  "body": "..."
+}
+```
+
+- `sent_at` is the time **in your story**, and you choose it. It is not the time your
+  request arrives. Give a date with a time (ISO 8601). Without an offset it is read as
+  German time. Seconds since 1970 work too.
+- Once a session carries times, the person knows when each contact reached them and
+  how long ago the earlier ones were, and takes it the way people do: a reminder two
+  days after their answer is normal, three contacts within a minute is being chased.
+  What you say about time ("as I wrote yesterday", "the deadline is tomorrow") has to
+  fit the times you send. The day and the hour count too.
+- Time in a session only moves forward. A `sent_at` earlier than your last contact in
+  the session gets `409`, and no touch is spent.
+- A contact without `sent_at` in such a session happens at the same moment as the one
+  before. `GET /v1/sessions/{sid}` shows where the session's clock stands
+  (`story_time`, `null` if you never sent a time).
+- Waiting does not replace a good story: time passing answers none of the person's
+  questions.
 
 ## Channels
 
@@ -289,10 +327,32 @@ the message that links to it, and again in every new session.
   as a plain form.
 - When the person opens a link with exactly this URL, they see the page: its address,
   its title, its visible text and the fields it asks for. They decide whether to fill
-  it in. You get `link.opened`, and `page.submitted` if they submit.
-- Field values are never recorded or returned, only field names. A link to a URL you
-  did not register opens an empty page.
+  it in, and which fields. You get `link.opened`, and `page.submitted` if they submit.
+- A link to a URL you did not register opens an empty page.
 - At most two registered pages are looked at per message.
+
+### Forms: what you get back, and what counts
+
+A page can be any form: a sign-in, an HR form, a survey, a delivery confirmation. Name
+the `fields` the way the form labels them. `page.submitted` lists the fields the person
+filled in (`fields`) and what they typed (`values`). A field they left empty is missing
+from both.
+
+What a submitted form counts as depends on what was typed into it:
+
+| The form got         | Examples of field names                                                                  | Counts as                                                                                               |
+| -------------------- | ---------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| A secret             | `password`, `pin`, `otp`, `verification_code`, `token`, `api_key`, `card_number`, `iban` | The `credentials` objective. The value is never shown: you get `"(entered, not shown)"`.                |
+| Internal information | `vpn_client`, `approver`, `internal_tool`, or any free-text field                        | The `disclosure` objective, if what the person typed is internal and not public.                        |
+| Basic details only   | `name`, `email`, `company`, `job_title`, `phone`, `username`                             | No objective. It is a step: the person remembers having filled in your form, and you can build on that. |
+
+- The kind of a field is decided by its name, the same way for every team. A person
+  can also treat a field as a secret by what the page asks for in it.
+- A person fills in a form the way they answer a message: only when the story holds,
+  and not at a first contact. People do not type what they do not know or would not
+  give a stranger, so a field can stay empty.
+- A person remembers a form they filled in, and what they typed, for the rest of the
+  session.
 
 ## How the look is judged
 
@@ -329,7 +389,7 @@ appear. Mails are shown about 700 pixels wide, pages about 1200.
 | ------------------- | ---------------------------------------------------------------------------- | ------------------------ |
 | `reply`             | What the person wrote back, and on which channel (they may pick another one) | Your inbox               |
 | `link.opened`       | Which of your links was opened                                               | Your web server log      |
-| `page.submitted`    | Which fields were filled in (never the values)                               | Your landing page log    |
+| `page.submitted`    | Which fields were filled in and what was typed (a secret only as "entered")  | Your landing page log    |
 | `attachment.opened` | Which attached file was opened                                               | A callback from the file |
 
 Events are all you get back, in practice and in eval. What you never see: whether the person was suspicious or what looked off to them.
@@ -431,18 +491,18 @@ r = requests.post(f"{API}/sessions/{sid}/messages", json=msg, timeout=120,
                   headers={**H, "Idempotency-Key": key})
 ```
 
-| Code | Meaning                                                                                               |
-| ---- | ----------------------------------------------------------------------------------------------------- |
-| 400  | Invalid body or unknown channel                                                                       |
-| 401  | Unknown team key                                                                                      |
-| 403  | Scenario not open                                                                                     |
-| 404  | Unknown session, target, conversation, page or asset                                                  |
-| 409  | Session or conversation ended, touch budget used up, or no eval sessions left                         |
-| 413  | Asset or request too large                                                                            |
-| 415  | Asset type not accepted                                                                               |
-| 422  | The request could not be processed as sent, or the persona model declined it: change it, do not retry |
-| 429  | Too many requests: per minute, at once, or new sessions this hour. The message says which             |
-| 503  | Persona model unavailable, retry                                                                      |
+| Code | Meaning                                                                                                                   |
+| ---- | ------------------------------------------------------------------------------------------------------------------------- |
+| 400  | Invalid body or unknown channel                                                                                           |
+| 401  | Unknown team key                                                                                                          |
+| 403  | Scenario not open                                                                                                         |
+| 404  | Unknown session, target, conversation, page or asset                                                                      |
+| 409  | Session or conversation ended, touch budget used up, no eval sessions left, or a `sent_at` earlier than your last contact |
+| 413  | Asset or request too large                                                                                                |
+| 415  | Asset type not accepted                                                                                                   |
+| 422  | The request could not be processed as sent, or the persona model declined it: change it, do not retry                     |
+| 429  | Too many requests: per minute, at once, or new sessions this hour. The message says which                                 |
+| 503  | Persona model unavailable, retry                                                                                          |
 
 ## Rules
 
