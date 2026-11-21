@@ -1,0 +1,9 @@
+[project]
+name = "start-hack"
+version = "0.1.0"
+description = "MVP phishing agent against the revel8 Target API"
+requires-python = ">=3.10"
+dependencies = [
+    "requests>=2.32",
+    "openai>=3.0",
+]
