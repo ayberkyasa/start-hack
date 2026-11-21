@@ -54,6 +54,8 @@ Each task should be a reviewable change. If a task grows too large, split it int
 - Depends on: T03.
 - Deliver: client protocol and mock implementation for discovery, sessions, messages, calls, pages, assets, history, and closure.
 - Accept: scripted multi-contact fixtures cover reply, silence, another-channel reply, field submission, call termination, limits, and idempotent repeated contacts; mock execution has no network dependency.
+- Partial, 2026-11-21. The fixed library replay client covers discovery, sessions, asset and page receipts, silence, a cross-channel reply, a repeated request, a call, field names, limits, event history, and closure. Five offline tests verify the recording, including repeatability with sockets blocked.
+- Outstanding: the protocol accepts recorded step IDs. The interchangeable request-driven contact client in the original T06 deliverable is outside this implementation.
 
 ## Milestone B — Remote adapter and safe execution
 

@@ -94,3 +94,16 @@
   stored row order. Redacted raw responses remain separate and addressable by
   attempt ID.
 - Affected tasks: T05, T17.
+
+## D007 — Temporary direct commits to implementation
+
+- Date: 2026-11-21
+- Status: accepted by explicit user instruction, effective with T06.
+- Context: the shared implementation branch includes the foundation through T05.
+- Decision: commit and push verified task changes directly to `implementation`
+  until the user requests the PR workflow again.
+- Alternatives: task branches and PRs targeting `implementation`, or stacked PRs
+  as originally recorded in D002.
+- Consequences: the branch history contains each task commit immediately.
+  Verify the remote tip and preserve concurrent work.
+- Affected tasks: T06 and subsequent requested tasks during this period.

@@ -121,6 +121,27 @@ npm --prefix frontend run preview
 
 This serves at <http://127.0.0.1:4173>. No deployment is configured.
 
+## Offline library replay
+
+For transcript or inspector development, run this from `backend/` with the
+project's Python environment. Each step supplies a saved request and response.
+Error steps retain the fixture status and body. Accessors return copies, so a
+consumer can inspect a response without modifying the next replay.
+
+```python
+from app.target.replay import LibraryReplay
+
+client = LibraryReplay()
+for step in client.steps():
+    exchange = client.advance(step)
+    print(step, exchange.operation, exchange.request, exchange.body)
+```
+
+The session exposes its current touch count through `client.session()`.
+`client.events()` returns the recorded remote events seen so far. The
+library script includes a repeated request, an ended call, and an exhausted
+budget. Create another client to replay the same recording from the beginning.
+
 ## Repository map
 
 - `backend/app/`: API entry point, typed domain records, and packages for storage,
@@ -138,10 +159,8 @@ and runtime databases are ignored. Never add credentials to frontend variables.
 
 ## Contribution workflow
 
-Each task has a branch and a stacked PR: `t01` targets `main`, `t02` starts from and
-targets `t01`, and so on. Verify the current stack before beginning another task,
-particularly after parent PRs merge. Commit, push, and open the requested task's PR
-after its acceptance checks pass. Do not merge the stack automatically.
+Commit verified task changes directly to `implementation` and push that branch.
+The user will indicate when to resume task branches and pull requests.
 
 ## Challenge overview (supplied)
 

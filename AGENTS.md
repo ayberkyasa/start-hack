@@ -23,11 +23,9 @@ Build the autonomous revel8 simulation console described in SPEC.md. The applica
 
 ## Git branches and pull requests
 
-- Use the exact task ID in lowercase as the branch name: `t01`, `t02`, etc., as requested by the user.
-- Fetch `origin` and create each new task branch from the latest `origin/implementation`. Set the pull request base to `implementation`.
-- Preserve existing branch history and user changes.
-- After completing the requested task and verification, commit the task changes, push the branch, and open its GitHub PR.
-- Attach the created PR to the chat and report its URL. Stop after the requested task; do not begin the next task automatically.
+- The current user instruction is to commit and push each verified task directly to `implementation`. This applies until the user restores the PR workflow.
+- Verify the local branch and remote tip before starting. Preserve user changes and remote history.
+- Stop after the requested task and report its commit.
 
 ## Architectural invariants
 

@@ -1,0 +1,51 @@
+{
+  "scenario": {
+    "id": "library", "kind": "mock", "company": "Example Library",
+    "targets": [{"id": "reader-1", "name": "Library desk", "role": "Public information"}],
+    "objectives": [{"id": "hours", "text": "Find the reading room opening time."}],
+    "touch_budget": 3, "open": true
+  },
+  "channels": ["email", "sms", "live_chat"],
+  "steps": [
+    {
+      "id": "open", "operation": "session.open", "request": {"scenario_id": "library"},
+      "body": {"session_id": "session-1", "scenario_id": "library", "touch_budget": 3, "touches_used": 0, "status": "active"}
+    },
+    {
+      "id": "hours-file", "operation": "asset.upload", "request": {"filename": "hours.pdf"},
+      "body": {"asset_id": "asset-hours", "type": "application/pdf", "size": 512}
+    },
+    {
+      "id": "hours-page", "operation": "page.register",
+      "request": {"title": "Reading room hours", "text": "Choose the reading room opening hour.", "url": "https://library.example/hours", "fields": ["opening_hour"]},
+      "body": {"page_id": "page-1"}
+    },
+    {
+      "id": "notice", "operation": "message", "observation_id": "obs-1",
+      "request": {"to": "reader-1", "channel": "email", "body": "The reading room calendar is available."}
+    },
+    {
+      "id": "hours-question", "operation": "message", "observation_id": "obs-2", "request_key": "library-hours-2",
+      "request": {"to": "reader-1", "channel": "email", "body": "What time does the reading room open?"}
+    },
+    {"id": "hours-question-again", "repeat_of": "hours-question"},
+    {
+      "id": "chat", "operation": "conversation.start", "observation_id": "obs-3",
+      "request": {"to": "reader-1", "channel": "live_chat"}
+    },
+    {
+      "id": "goodbye", "operation": "conversation.turn", "observation_id": "obs-4",
+      "request": {"say": "Thanks for confirming the opening time."}
+    },
+    {
+      "id": "after-goodbye", "operation": "conversation.turn", "error_status": 409,
+      "request": {"say": "Goodbye."}, "body": {"detail": "Fixture conversation has ended."}
+    },
+    {
+      "id": "at-limit", "operation": "message", "error_status": 409,
+      "request": {"to": "reader-1", "channel": "email", "body": "Thank you."},
+      "body": {"detail": "Fixture touch budget exhausted."}
+    },
+    {"id": "close", "operation": "session.close", "request": {}, "body": null}
+  ]
+}
