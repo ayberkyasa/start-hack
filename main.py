@@ -228,33 +228,42 @@ def finalize(plan, persona):
 
 
 def research(client, model, target):
-    """OSINT the target via OpenAI web_search (the default). Optionally also use our revel8_osint
-    MCP server (search_public_mentions + sherlock) -- set USE_OSINT_MCP=1 and run mcp_server.py.
-    If that opted-in MCP server can't be reached, fall back to web_search only rather than fail."""
-    prompt = (
-        f"Research this real person for a social-engineering they consented to. "
-        f"Name: {target['name']}. Role: {target['role']}. "
-        "Find what is public and what likely matters to them right now: current projects, "
-        "recent talks/posts, the company, people around them, tools/vendors they use, "
-        "and anything an attacker could plausibly exploit.\n"
-        "Use every tool you have: web_search for the open web, the `search_public_mentions` "
-        "tool for public social-media mentions (try the person's and the company's name, and "
-        "narrow with the `platforms` arg when a network matters), and the `sherlock` tool to "
-        "find the person's accounts across networks from a likely username. Corroborate across "
-        "tools. Be concrete and cite what you find."
+    """OSINT the target via OpenAI web_search plus our OSINT MCP server
+    (search_public_mentions + sherlock + fetch_url, served over Streamable HTTP);
+    return an objective-mapped attacker brief for the message-writing step."""
+    r = client.responses.create(
+        model=model,
+        tools=[
+            {"type": "web_search"},
+            {"type": "mcp", "server_label": "osint",
+             "server_url": os.environ.get("MCP_SERVER_URL", "http://127.0.0.1:8000/mcp"),
+             "require_approval": "never"},
+        ],
+        tool_choice="required",  # force at least one tool call; without it the model answers from memory
+        input=(
+            "You are the reconnaissance step of a consented phishing simulation. The target is an "
+            "AI twin of a real person; everything public about them is true for the twin. Build an "
+            "attacker's brief that the message-writing step will use directly.\n"
+            f"TARGET: {target['name']} - {target['role']}.\n\n"
+            "Use every tool: web_search for the open web; Do deep search on the web. use `fetch_url` for each page to "
+            "READ the full text of a page a search only summarised. Corroborate across "
+            "tools and prefer concrete, dated facts over generalities.\n\n"
+            "Output a brief with these labelled sections (omit one only if you truly found nothing):\n"
+            "1. WHO - role, company, what they own, how they come across publicly.\n"
+            "2. HOOKS - what this person is open to or cares about RIGHT NOW (projects, launches, "
+            "hiring, events, deadlines, public asks). These are the openings; be specific and dated.\n"
+            "3. RECENT & CITABLE - concrete recent facts (talks, posts, news) with dates and sources, "
+            "usable as proof that a message is legitimate.\n"
+            "4. TRUST GRAPH - people, vendors, tools and services they plausibly get mail from "
+            "(candidates to impersonate), plus realistic look-alike sender domains an attacker could "
+            "register (never the company's own domain).\n"
+            "5. PRETEXTS - 2-3 attack ideas, each mapped to one objective: 'credentials' (they sign in "
+            "on a page we host), 'action' (open a file / approve / forward), or 'disclosure' (reveal "
+            "something internal and non-public). For each: the story, the channel, who it's from, and "
+            "which HOOK it exploits."
+        ),
     )
-    tools = [{"type": "web_search"}]
-    if os.environ.get("USE_OSINT_MCP"):   # opt-in: also use the revel8_osint MCP server
-        tools.append({"type": "mcp", "server_label": "revel8_osint",
-                      "server_url": os.environ.get("MCP_SERVER_URL", "http://127.0.0.1:8000/mcp"),
-                      "require_approval": "never"})
-    try:
-        r = client.responses.create(model=model, tools=tools, input=prompt)
-    except Exception as e:   # opted-in OSINT MCP server unreachable (e.g. 424) -> fall back to web_search
-        if len(tools) == 1:
-            raise
-        print(f"{DBG}  [research] OSINT MCP unavailable ({e}); using web_search only{R}")
-        r = client.responses.create(model=model, tools=[{"type": "web_search"}], input=prompt)
+   
     # Verbose eval: did the model actually reach for the tools? Dump each tool item.
     for item in r.output:
         t = getattr(item, "type", "")
@@ -268,6 +277,9 @@ def research(client, model, target):
                   f" -> {('ERROR ' + str(err)) if err else (str(len(out)) + ' chars')}{R}")
         elif t == "web_search_call":
             print(f"{DBG}  [research] web_search {getattr(item, 'status', '')}{R}")
+        else:
+            print(f"{DBG}  [research] (item: {t or '?'}){R}")  # reasoning/message/etc. - no hidden tool call
+    print(f"{DBG}  [research] final brief: {r.output_text}")
     return r.output_text
 
 
@@ -603,8 +615,8 @@ def main():
     client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])            # research (web_search)
     model = os.environ["APP_MODEL_ID"]
     content_client = OpenAI(base_url=os.environ["AMD_BASE_URL"],     # message content (AMD Token Factory)
-                            api_key=os.environ["AMD_API_KEY"])
-    content_model = os.environ.get("AMD_MODEL_ID", "DeepSeek-V4-Flash")
+                           api_key=os.environ["AMD_API_KEY"])
+    content_model = os.environ.get("AMD_MODEL_ID", "DeepSeek-V4.1-Flash")
     api = APIClient(team_key=os.environ["TARGET_API_TEAM_KEY"])
 
     for scenario in [s for s in api.list_scenarios() if s.get("kind") == "practice"]:
