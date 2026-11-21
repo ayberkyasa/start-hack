@@ -57,46 +57,20 @@ A scenario is a company with people you may target, plus objectives.
     "kind": "practice",
     "company": "revel8",
     "targets": [
-      {
-        "id": "julius",
-        "name": "Julius Muth",
-        "role": "Co-Founder & Co-CEO, revel8 (business and go-to-market)"
-      },
-      {
-        "id": "tom",
-        "name": "Tom Müller",
-        "role": "Co-Founder & Co-CEO, revel8 (product)"
-      },
-      {
-        "id": "robert",
-        "name": "Robert Seilbeck",
-        "role": "Co-Founder & CTO, revel8"
-      }
+      { "id": "julius", "name": "Julius Muth", "role": "Co-Founder & Co-CEO, revel8 (business and go-to-market)" },
+      { "id": "tom", "name": "Tom Müller", "role": "Co-Founder & Co-CEO, revel8 (product)" },
+      { "id": "robert", "name": "Robert Seilbeck", "role": "Co-Founder & CTO, revel8" }
     ],
     "objectives": [
-      {
-        "id": "credentials",
-        "text": "Get a target to submit credentials on a page you control"
-      },
-      {
-        "id": "disclosure",
-        "text": "Learn internal facts that are not public (systems, processes, plans)"
-      },
-      {
-        "id": "action",
-        "text": "Get a target to act for you (change payment details, grant access, open a file)"
-      }
+      { "id": "credentials", "text": "Get a target to submit credentials on a page you control" },
+      { "id": "disclosure", "text": "Learn internal facts that are not public (systems, processes, plans)" },
+      { "id": "action", "text": "Get a target to act for you (change payment details, grant access, open a file)" }
     ],
     "touch_budget": 30,
     "max_sessions": null,
     "open": true
   },
-  {
-    "id": "eval",
-    "kind": "eval",
-    "open": false,
-    "opens_at": "<announced at kickoff>"
-  }
+  { "id": "eval", "kind": "eval", "open": false, "opens_at": "<announced at kickoff>" }
 ]
 ```
 
@@ -116,13 +90,7 @@ A scenario is a company with people you may target, plus objectives.
 `POST /v1/sessions` with `{"scenario_id": "practice"}`
 
 ```json
-{
-  "session_id": "s_8f2c41d0a7",
-  "scenario_id": "practice",
-  "touch_budget": 30,
-  "touches_used": 0,
-  "status": "active"
-}
+{ "session_id": "s_8f2c41d0a7", "scenario_id": "practice", "touch_budget": 30, "touches_used": 0, "status": "active", "story_time": null }
 ```
 
 - **A session is one continuous exchange.** Inside it, the people remember every
@@ -171,41 +139,28 @@ The response is the reaction:
   "message_id": "m_3fa2b81c07",
   "touches_used": 1,
   "events": [
-    {
-      "id": "e_7",
-      "type": "link.opened",
-      "message_id": "m_3fa2b81c07",
-      "url": "https://portal-signin.example-company-it.de/auth"
-    },
-    {
-      "id": "e_8",
-      "type": "page.submitted",
-      "message_id": "m_3fa2b81c07",
-      "page_id": "p_91c0d2aa4e",
-      "fields": ["email", "password"]
-    },
-    {
-      "id": "e_9",
-      "type": "reply",
-      "channel": "email",
-      "in_reply_to": "m_3fa2b81c07",
-      "subject": "Re: Speaker logistics for Thursday",
-      "body": "Done, thanks! ..."
-    }
+    { "id": "e_7", "type": "link.opened", "message_id": "m_3fa2b81c07",
+      "url": "https://portal-signin.example-company-it.de/auth" },
+    { "id": "e_8", "type": "page.submitted", "message_id": "m_3fa2b81c07", "page_id": "p_91c0d2aa4e",
+      "fields": ["email", "password"],
+      "values": { "email": "julius@revel8.ai", "password": "(entered, not shown)" } },
+    { "id": "e_9", "type": "reply", "channel": "email", "in_reply_to": "m_3fa2b81c07",
+      "subject": "Re: Speaker logistics for Thursday", "body": "Done, thanks! ..." }
   ]
 }
 ```
 
 `"events": []` means the person ignored it.
 
-| Field         | Required | Meaning                                                                                                          |
-| ------------- | -------- | ---------------------------------------------------------------------------------------------------------------- |
-| `to`          | yes      | A target `id` from the scenario.                                                                                 |
-| `channel`     | yes      | One of the message channels below.                                                                               |
-| `from`        | no       | What the recipient can see of the sender on that channel: `name` and `address` (mail address, number or handle). |
-| `subject`     | no       | For channels that have one.                                                                                      |
-| `body`        | yes      | Plain text or HTML, see below.                                                                                   |
-| `attachments` | no       | See "Files and images".                                                                                          |
+| Field | Required | Meaning |
+|---|---|---|
+| `to` | yes | A target `id` from the scenario. |
+| `channel` | yes | One of the message channels below. |
+| `from` | no | What the recipient can see of the sender on that channel: `name` and `address` (mail address, number or handle). |
+| `subject` | no | For channels that have one. |
+| `body` | yes | Plain text or HTML, see below. |
+| `attachments` | no | See "Files and images". |
+| `sent_at` | no | When this is sent, in your story. See "Time". |
 
 - Everything in `from` is a claim. The person sees it as that channel would show it
   and makes up their own mind.
@@ -215,22 +170,49 @@ The response is the reaction:
 - Plain text is fine and often the better choice. See "How the look is judged": the
   look counts in your score, but the person reacts to your words, sender and links.
 
+## Time
+
+By default the people know today's date and nothing else about time: your contacts
+simply follow one another. If your attack plays over hours or days, say so with
+`sent_at`. It works on messages, on `conversations` (when the phone rings) and on
+`turns` (each thing you say).
+
+```json
+{ "to": "julius", "channel": "email", "sent_at": "2026-11-23T09:14:00+01:00", "body": "..." }
+```
+
+- `sent_at` is the time **in your story**, and you choose it. It is not the time your
+  request arrives. Give a date with a time (ISO 8601). Without an offset it is read as
+  German time. Seconds since 1970 work too.
+- Once a session carries times, the person knows when each contact reached them and
+  how long ago the earlier ones were, and takes it the way people do: a reminder two
+  days after their answer is normal, three contacts within a minute is being chased.
+  What you say about time ("as I wrote yesterday", "the deadline is tomorrow") has to
+  fit the times you send. The day and the hour count too.
+- Time in a session only moves forward. A `sent_at` earlier than your last contact in
+  the session gets `409`, and no touch is spent.
+- A contact without `sent_at` in such a session happens at the same moment as the one
+  before. `GET /v1/sessions/{sid}` shows where the session's clock stands
+  (`story_time`, `null` if you never sent a time).
+- Waiting does not replace a good story: time passing answers none of the person's
+  questions.
+
 ## Channels
 
 `GET /v1/channels` returns the current list. Missing one? Ask us at the event; adding
 a channel takes a minute.
 
-| Group                     | `channel`                                                                                       | What `body` is                                     |
-| ------------------------- | ----------------------------------------------------------------------------------------------- | -------------------------------------------------- |
-| Mail and office           | `email`                                                                                         | The mail                                           |
-|                           | `calendar_invite`                                                                               | Title in `subject`, description in `body`          |
-|                           | `shared_document`                                                                               | A "someone shared a file with you" notification    |
-|                           | `voicemail`                                                                                     | The words spoken                                   |
-| Phone messaging           | `sms`, `whatsapp`, `signal`, `telegram`, `imessage`                                             | The message                                        |
-| Work chat                 | `slack`, `teams_chat`, `discord`                                                                | The message                                        |
-| Social                    | `linkedin_message`, `linkedin_connection_request`, `x_dm`, `instagram_dm`, `facebook_messenger` | The message or note                                |
-| System                    | `mfa_push`                                                                                      | The text of a sign-in approval prompt on the phone |
-| Live (conversations only) | `phone_call`, `video_call`, `teams_call`, `live_chat`                                           | Not used; see "Conversations"                      |
+| Group | `channel` | What `body` is |
+|---|---|---|
+| Mail and office | `email` | The mail |
+| | `calendar_invite` | Title in `subject`, description in `body` |
+| | `shared_document` | A "someone shared a file with you" notification |
+| | `voicemail` | The words spoken |
+| Phone messaging | `sms`, `whatsapp`, `signal`, `telegram`, `imessage` | The message |
+| Work chat | `slack`, `teams_chat`, `discord` | The message |
+| Social | `linkedin_message`, `linkedin_connection_request`, `x_dm`, `instagram_dm`, `facebook_messenger` | The message or note |
+| System | `mfa_push` | The text of a sign-in approval prompt on the phone |
+| Live (conversations only) | `phone_call`, `video_call`, `teams_call`, `live_chat` | Not used; see "Conversations" |
 
 ## Files and images
 
@@ -289,10 +271,32 @@ the message that links to it, and again in every new session.
   as a plain form.
 - When the person opens a link with exactly this URL, they see the page: its address,
   its title, its visible text and the fields it asks for. They decide whether to fill
-  it in. You get `link.opened`, and `page.submitted` if they submit.
-- Field values are never recorded or returned, only field names. A link to a URL you
-  did not register opens an empty page.
+  it in, and which fields. You get `link.opened`, and `page.submitted` if they submit.
+- A link to a URL you did not register opens an empty page.
 - At most two registered pages are looked at per message.
+
+### Forms: what you get back, and what counts
+
+A page can be any form: a sign-in, an HR form, a survey, a delivery confirmation. Name
+the `fields` the way the form labels them. `page.submitted` lists the fields the person
+filled in (`fields`) and what they typed (`values`). A field they left empty is missing
+from both.
+
+What a submitted form counts as depends on what was typed into it:
+
+| The form got | Examples of field names | Counts as |
+|---|---|---|
+| A secret | `password`, `pin`, `otp`, `verification_code`, `token`, `api_key`, `card_number`, `iban` | The `credentials` objective. The value is never shown: you get `"(entered, not shown)"`. |
+| Internal information | `vpn_client`, `approver`, `internal_tool`, or any free-text field | The `disclosure` objective, if what the person typed is internal and not public. |
+| Basic details only | `name`, `email`, `company`, `job_title`, `phone`, `username` | No objective. It is a step: the person remembers having filled in your form, and you can build on that. |
+
+- The kind of a field is decided by its name, the same way for every team. A person
+  can also treat a field as a secret by what the page asks for in it.
+- A person fills in a form the way they answer a message: only when the story holds,
+  and not at a first contact. People do not type what they do not know or would not
+  give a stranger, so a field can stay empty.
+- A person remembers a form they filled in, and what they typed, for the rest of the
+  session.
 
 ## How the look is judged
 
@@ -309,12 +313,12 @@ screen: the mail in a mail client with its sender line and subject, the page in 
 browser with its address bar. Each picture is rated on four questions, 0 to 2 points
 each:
 
-| Question                                              | Looks at                                                                                               |
-| ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
-| Does it look like something this sender really sends? | Logo, colours, structure and footer for a company; tone and signature for a person                     |
-| Is the format right for the sender and the occasion?  | A vendor alert in bare plain text looks off. So does a colleague's two-line note in a glossy template. |
-| Is it clean?                                          | Missing images, placeholder text, mixed fonts, layout glitches                                         |
-| Do the details hold?                                  | Signature, legal footer, sender line, link text that matches where the link goes                       |
+| Question | Looks at |
+|---|---|
+| Does it look like something this sender really sends? | Logo, colours, structure and footer for a company; tone and signature for a person |
+| Is the format right for the sender and the occasion? | A vendor alert in bare plain text looks off. So does a colleague's two-line note in a glossy template. |
+| Is it clean? | Missing images, placeholder text, mixed fonts, layout glitches |
+| Do the details hold? | Signature, legal footer, sender line, link text that matches where the link goes |
 
 Messages on other channels have no layout and get no look rating.
 
@@ -325,12 +329,12 @@ appear. Mails are shown about 700 pixels wide, pages about 1200.
 
 ## Event types
 
-| Type                | What you learn                                                               | Real-world equivalent    |
-| ------------------- | ---------------------------------------------------------------------------- | ------------------------ |
-| `reply`             | What the person wrote back, and on which channel (they may pick another one) | Your inbox               |
-| `link.opened`       | Which of your links was opened                                               | Your web server log      |
-| `page.submitted`    | Which fields were filled in (never the values)                               | Your landing page log    |
-| `attachment.opened` | Which attached file was opened                                               | A callback from the file |
+| Type | What you learn | Real-world equivalent |
+|---|---|---|
+| `reply` | What the person wrote back, and on which channel (they may pick another one) | Your inbox |
+| `link.opened` | Which of your links was opened | Your web server log |
+| `page.submitted` | Which fields were filled in and what was typed (a secret only as "entered") | Your landing page log |
+| `attachment.opened` | Which attached file was opened | A callback from the file |
 
 Events are all you get back, in practice and in eval. What you never see: whether the person was suspicious or what looked off to them.
 Infer it from replies and silence, as a real attacker would.
@@ -340,20 +344,11 @@ Infer it from replies and silence, as a real attacker would.
 `POST /v1/sessions/{sid}/conversations`
 
 ```json
-{
-  "to": "julius",
-  "channel": "phone_call",
-  "from": { "address": "+49 89 1234 5678" }
-}
+{ "to": "julius", "channel": "phone_call", "from": { "address": "+49 89 1234 5678" } }
 ```
 
 ```json
-{
-  "conversation_id": "c_5b7e02f1a9",
-  "status": "answered",
-  "persona_says": "Hello?",
-  "touches_used": 2
-}
+{ "conversation_id": "c_5b7e02f1a9", "status": "answered", "persona_says": "Hello?", "touches_used": 2 }
 ```
 
 The person always picks up; `persona_says` is how they answer the phone.
@@ -394,12 +389,12 @@ requests.post(f"{API}/conversations/{conv['conversation_id']}/end", headers=H)
 
 ## Practice and eval
 
-|              | Practice                             | Eval                            |
-| ------------ | ------------------------------------ | ------------------------------- |
-| Targets      | Named: the three people listed above | Hidden until the scoring window |
-| Sessions     | Unlimited (rate limited)             | 3 per team, median counts       |
-| Touch budget | 30 per session, then open a new one  | 10 per session                  |
-| Scored       | No                                   | Yes                             |
+| | Practice | Eval |
+|---|---|---|
+| Targets | Named: the three people listed above | Hidden until the scoring window |
+| Sessions | Unlimited (rate limited) | 3 per team, median counts |
+| Touch budget | 30 per session, then open a new one | 10 per session |
+| Scored | No | Yes |
 
 ## Limits and errors
 
@@ -431,18 +426,18 @@ r = requests.post(f"{API}/sessions/{sid}/messages", json=msg, timeout=120,
                   headers={**H, "Idempotency-Key": key})
 ```
 
-| Code | Meaning                                                                                               |
-| ---- | ----------------------------------------------------------------------------------------------------- |
-| 400  | Invalid body or unknown channel                                                                       |
-| 401  | Unknown team key                                                                                      |
-| 403  | Scenario not open                                                                                     |
-| 404  | Unknown session, target, conversation, page or asset                                                  |
-| 409  | Session or conversation ended, touch budget used up, or no eval sessions left                         |
-| 413  | Asset or request too large                                                                            |
-| 415  | Asset type not accepted                                                                               |
-| 422  | The request could not be processed as sent, or the persona model declined it: change it, do not retry |
-| 429  | Too many requests: per minute, at once, or new sessions this hour. The message says which             |
-| 503  | Persona model unavailable, retry                                                                      |
+| Code | Meaning |
+|---|---|
+| 400 | Invalid body or unknown channel |
+| 401 | Unknown team key |
+| 403 | Scenario not open |
+| 404 | Unknown session, target, conversation, page or asset |
+| 409 | Session or conversation ended, touch budget used up, no eval sessions left, or a `sent_at` earlier than your last contact |
+| 413 | Asset or request too large |
+| 415 | Asset type not accepted |
+| 422 | The request could not be processed as sent, or the persona model declined it: change it, do not retry |
+| 429 | Too many requests: per minute, at once, or new sessions this hour. The message says which |
+| 503 | Persona model unavailable, retry |
 
 ## Rules
 
