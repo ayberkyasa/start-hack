@@ -147,6 +147,8 @@ Milestone gate: start one mock run, watch an autonomous follow-up, refresh, and 
 - Deliver: structured request/result interface, configurable model IDs, refusal/incomplete/error handling, bounded provider retries, token/latency/cost records.
 - Accept: provider fixtures cover all result variants and frozen fallback order; unknown cost is not zero; failures cannot mutate a submitted action. Verify current official API contracts during implementation.
 
+Partial progress (2026-11-21): T04’s SQLite usage record supports explicit provider outcomes and missing measurements. Existing records without an outcome remain readable. Provider integration and retry/fallback checks remain open.
+
 ### T20 — Implement read-only research and evidence storage
 - [ ] Complete
 - Depends on: T04, T19.
@@ -181,7 +183,7 @@ Milestone gate: start one mock run, watch an autonomous follow-up, refresh, and 
 - [ ] Complete
 - Depends on: T21, T22, T23.
 - Deliver: evidence-linked provisional outcomes, hypothesis/ledger updates, configured stop thresholds, no-useful-continuation detection.
-- Accept: link open is not automatically a win; submitted field names are retained without values; suspected disclosure references exact reply evidence; no official score is fabricated.
+- Accept: link open is not automatically a win; legacy field-only submissions remain readable; new submissions retain simulator-masked evidence; basic contact details alone do not satisfy an objective; suspected disclosure references the observed reply or submission; no official score is fabricated.
 
 ### T26 — Connect the autonomous message loop
 - [ ] Complete

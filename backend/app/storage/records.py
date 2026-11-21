@@ -1,6 +1,6 @@
 """Additional persisted records for provenance, session notes, and metering."""
 
-from typing import Self
+from typing import Literal, Self
 
 from pydantic import AwareDatetime, model_validator
 
@@ -29,6 +29,7 @@ class ModelUsage(FrozenModel):
     recorded_at: AwareDatetime
     provider_id: Identifier
     model_id: Identifier
+    outcome: Literal["completed", "refused", "incomplete", "error"] | None = None
     input_tokens: Count | None = None
     output_tokens: Count | None = None
     duration_ms: Count

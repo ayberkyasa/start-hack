@@ -332,7 +332,7 @@ The simulator does not document persona token streaming. Show elapsed waiting ti
 
 Replay supports stepping, playback speed, and artifact inspection from saved records without API/model calls. Compare runs by version, provisional outcomes, contacts, latency, factual/continuity issues, recovery results, and cost. Mock and real runs are always distinguishable.
 
-Observed events: reply, link.opened, page.submitted (field names only), attachment.opened. Display hypotheses and suspected disclosure as estimates with evidence. Do not display invented suspicion, trust, hidden-hook hits, credential values, craft ratings, or official scores.
+Observed events: reply, link.opened, page.submitted (completed fields and simulator-returned values, with secrets masked), attachment.opened. Basic contact details alone indicate progress. A masked secret entry or nonpublic internal information can support a provisional objective assessment. Older events may lack values. Display hypotheses and suspected disclosure as estimates with evidence. Do not display invented suspicion, trust, hidden-hook hits, credential values, craft ratings, or official scores.
 
 ## 12. Verification and eval readiness
 

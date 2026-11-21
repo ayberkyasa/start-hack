@@ -290,9 +290,26 @@ the message that links to it, and again in every new session.
 - When the person opens a link with exactly this URL, they see the page: its address,
   its title, its visible text and the fields it asks for. They decide whether to fill
   it in. You get `link.opened`, and `page.submitted` if they submit.
-- Field values are never recorded or returned, only field names. A link to a URL you
-  did not register opens an empty page.
+- A submission reports completed field labels in `fields` and their entries in `values`.
+  Empty fields are absent from both. The simulator masks secrets as `(entered, not shown)`.
+  A link to an unregistered URL opens an empty page.
+- The simulator uses the registered labels as visible form fields and considers the
+  label and the information entered when classifying a submission. A persona may
+  skip a field or decline an inconsistent form. Basic contact details alone indicate
+  progress. A secret entry counts toward credentials, and nonpublic internal
+  information counts toward disclosure.
 - At most two registered pages are looked at per message.
+
+## Optional story time
+
+Messages, conversation starts and conversation turns accept an optional `sent_at`.
+For example, `2026-11-23T09:14:00+01:00` sets the simulated contact time.
+The persona can observe elapsed time and the local hour. An earlier timestamp than
+the previous contact in the session returns HTTP 409 without consuming a touch.
+After story time is set, omitting the timestamp retains the last story time.
+Clients can continue omitting it throughout. Session detail exposes `story_time`.
+
+Source for the Forms and Time update, checked 2026-11-21: [organizer API documentation](https://target-api.apps.01.cf.eu01.stackit.cloud/).
 
 ## How the look is judged
 
@@ -329,7 +346,7 @@ appear. Mails are shown about 700 pixels wide, pages about 1200.
 | ------------------- | ---------------------------------------------------------------------------- | ------------------------ |
 | `reply`             | What the person wrote back, and on which channel (they may pick another one) | Your inbox               |
 | `link.opened`       | Which of your links was opened                                               | Your web server log      |
-| `page.submitted`    | Which fields were filled in (never the values)                               | Your landing page log    |
+| `page.submitted`    | Completed fields and their values, with secrets masked                               | Your landing page log    |
 | `attachment.opened` | Which attached file was opened                                               | A callback from the file |
 
 Events are all you get back, in practice and in eval. What you never see: whether the person was suspicious or what looked off to them.

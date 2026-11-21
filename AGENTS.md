@@ -51,7 +51,7 @@ Build the autonomous revel8 simulation console described in SPEC.md. The applica
 - Keep model-output schema validation and business-rule validation separate. Handle refusals, incomplete responses, and provider errors explicitly.
 - Show concise decision summaries with evidence. Do not expose or simulate hidden chain-of-thought.
 - All claimed outcomes require recorded evidence. Hypothesis confidence and suspected incidents are estimates; hidden topics, suspicion, and official scores are unavailable.
-- Submitted page fields are names only. Never invent or collect credential values.
+- Submitted events can include values. Preserve the simulator’s secret-entry marker and never invent or collect actual credentials.
 
 ## Simulation boundaries and execution modes
 
