@@ -142,6 +142,20 @@ The session exposes its current touch count through `client.session()`.
 library script includes a repeated request, an ended call, and an exhausted
 budget. Create another client to replay the same recording from the beginning.
 
+## Inspecting existing sessions
+
+The backend inspector interface is `app.target.observer.Observer`. A
+`LibraryObserver` reads the current cursor of a `LibraryReplay`. A
+`RemoteObserver.from_settings(settings)` reads the documented Target API using
+the backend team key and request timeout. Both provide async methods for
+`scenarios()`, `channels()`, `sessions()`, `session(session_id)`, and
+`history(session_id)`. Constructing a reader performs no network I/O.
+
+Scenario views expose availability. Event history contains the API's observed
+events. Outgoing messages and conversational speech for local replay come from
+the saved transcript. The transport fixtures use a JSON list of channel names;
+the supplied contract describes a list but omits an example wire payload.
+
 ## Repository map
 
 - `backend/app/`: API entry point, typed domain records, and packages for storage,

@@ -1,6 +1,6 @@
 # Autonomous Simulation Console — Specification
 
-Status: implementation baseline from the planning conversation. T01 provides the application scaffold. T02 adds server settings and versioned snapshots of mode, scenario, provider, model, runtime limits, and code revision. T03 defines the typed domain records and transcript formats. T04 persists those records in a versioned local SQLite database. T05 adds the append-only timeline and redacted response archive. The T06 library fixture provides an offline, fixed exchange for replay consumers. TASKS.md tracks implemented behavior.
+Status: implementation baseline from the planning conversation. T01 provides the application scaffold. T02 adds server settings and versioned snapshots of mode, scenario, provider, model, runtime limits, and code revision. T03 defines the typed domain records and transcript formats. T04 persists those records in a versioned local SQLite database. T05 adds the append-only timeline and redacted response archive. The T06 library fixture provides an offline, fixed exchange for replay consumers. T07 provides a read-only inspector for scenario availability and existing sessions. TASKS.md tracks implemented behavior.
 
 ## 1. Purpose and sources
 

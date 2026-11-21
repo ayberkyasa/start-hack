@@ -61,10 +61,13 @@ Each task should be a reviewable change. If a task grows too large, split it int
 ## Milestone B — Remote adapter and safe execution
 
 ### T07 — Implement discovery and session read operations
-- [ ] Complete
+- [x] Complete
 - Depends on: T02, T03, T06.
 - Deliver: asynchronous real adapter for scenarios, channels, sessions, session detail, and event history; typed error normalization and timeout configuration.
 - Accept: transport fixtures verify exact API paths/authentication and locked-scenario handling; secrets are redacted; no invented endpoints.
+- Implemented the read-side adapter and its T06 fixture interface. Five authenticated GETs provide scenario availability, channel names, session summaries, session detail, and recorded event history. Timeouts use the configured limit.
+- Verified with mocked HTTPS transport, including sparse locked scenarios, exact methods and paths, credential redaction, redirect rejection, and typed HTTP, network, and response errors. Live service behavior remains unverified.
+
 
 ### T08 — Implement message and conversation operations
 - [ ] Complete
