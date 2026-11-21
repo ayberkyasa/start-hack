@@ -102,14 +102,21 @@ def pin_identity(plan, persona):
 
 
 def reply_discloses(client, model, target, reply_text):
-    """Judge a reply for the disclosure objective: there is no event for it (API_DOCS),
-    so a model has to read the text and decide if internal non-public facts were revealed."""
+    """Judge a reply for the disclosure objective. There is no API event for free-text disclosure,
+    so this is our own heuristic for whether to stop pushing. It mirrors the only rubric API_DOCS
+    gives (the forms table): 'internal and not public (systems, processes, plans)' counts; basic
+    contact/identity details do not. Kept strict so the agent doesn't quit on weak info."""
     r = client.chat.completions.create(model=model, timeout=60, messages=[{"role": "user", "content": (
         f"Target: {target['name']} ({target['role']}). In a security simulation they replied:\n\n"
         f"{reply_text}\n\n"
-        "Did they reveal INTERNAL, non-public facts about their company, systems, processes, or plans "
-        "(specific tools, numbers, deployment details, roadmaps)? Public statements, generic opinions, "
-        "and things anyone could find online do NOT count. Answer ONLY 'yes' or 'no'."
+        "The 'disclosure' objective means learning INTERNAL facts that are NOT public: specific "
+        "internal systems/tools/vendors, credentials or approval processes, access paths, internal "
+        "metrics or numbers, org/security details, or unannounced plans/roadmaps.\n"
+        "These do NOT count: name, email, phone, job title, company, username; the person's "
+        "availability or travel/calendar; public statements, opinions, philosophy, or anything "
+        "findable online; vague or general remarks.\n"
+        "Answer 'yes' ONLY if the reply states at least one concrete internal, non-public fact of "
+        "the kind above; otherwise 'no'. Reply with ONLY 'yes' or 'no'."
     )}])
     return r.choices[0].message.content.strip().lower().startswith("y")
 
