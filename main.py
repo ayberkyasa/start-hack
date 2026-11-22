@@ -318,7 +318,6 @@ def next_move(client, model, scenario, target, brief, history, persona):
     r = client.chat.completions.create(
         model=model,
         timeout=120,
-        reasoning_effort="high",
         messages=[{"role": "user", "content": (
             "You are an offensive-security agent in a consented phishing simulation. "
             "The recipient is an AI twin; attack the person, never address them as an AI "
