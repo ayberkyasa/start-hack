@@ -159,6 +159,77 @@ def fetch_url(url: str, max_chars: int = 4000) -> dict:
             "text": _html_to_text(html)[:max_chars], "error": None}
 
 
+# Keyless web search so ANY research model (e.g. DeepSeek on the AMD endpoint) can search the open
+# web without OpenAI's native `web_search` tool. Uses DuckDuckGo's HTML endpoint and parses the
+# organic result links; returns the same {title, url, snippet} shape as the other tools, so the
+# model can then call `fetch_url` on a hit to read it in full.
+DDG_URL = "https://html.duckduckgo.com/html/"
+_SEARCH_UA = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+                           "(KHTML, like Gecko) Chrome/124.0 Safari/537.36"}
+
+
+def _decode_ddg_url(href):
+    """DuckDuckGo result links are redirects (`//duckduckgo.com/l/?uddg=<urlencoded>`). Decode the
+    `uddg` param to the real destination so the model can `fetch_url` it directly; fall back to the
+    redirect URL itself (made absolute) if decoding fails."""
+    if not href:
+        return None
+    m = re.search(r"[?&]uddg=([^&]+)", href)
+    if m:
+        import urllib.parse as _up
+        try:
+            return _up.unquote(m.group(1))
+        except Exception:
+            pass
+    return href if href.startswith("http") else ("https:" + href)
+
+
+def _parse_ddg(html):
+    """Pull organic results out of a DuckDuckGo HTML page. Pure (no network) so it is unit-testable.
+    Parses each `result__a` link directly (DuckDuckGo's current HTML does not wrap results in a
+    `result__body` div), decodes the redirect URL, and grabs the sibling `result__snippet`."""
+    out = []
+    seen = set()
+    for block in re.findall(r'<div[^>]*class="[^"]*result[^"]*"[^>]*>(.*?)</div>', html, re.S):
+        a = re.search(r'<a[^>]*class="result__a"[^>]*href="([^"]+)"[^>]*>(.*?)</a>', block, re.S)
+        if not a:
+            continue
+        url = _decode_ddg_url(a.group(1))
+        if not url or url in seen:
+            continue
+        seen.add(url)
+        snip = re.search(r'<a[^>]*class="result__snippet"[^>]*>(.*?)</a>', block, re.S)
+        out.append({
+            "title": _html_to_text(a.group(2)),
+            "url": url,
+            "snippet": _html_to_text(snip.group(1)) if snip else "",
+        })
+    return out
+
+
+@mcp.tool()
+def web_search(query: str, limit: int = 8) -> dict:
+    """Keyless web search of the open web (DuckDuckGo). Use this when you need to discover pages,
+    then call `fetch_url` on a promising result to read it in full.
+
+    Returns {provider, query, count, results: [{title, url, snippet}], error}; `error` is non-null
+    only on a search failure (an empty `results` with error=None means nothing was found).
+
+    Example: web_search("revel8 Julius Muth CEO", 6)
+    """
+    try:
+        r = requests.get(DDG_URL, params={"q": query}, headers=_SEARCH_UA, timeout=25)
+    except requests.RequestException as e:
+        return {"provider": "duckduckgo", "query": query, "count": 0, "results": [],
+                "error": f"search failed: {e}"}
+    if r.status_code != 200:
+        return {"provider": "duckduckgo", "query": query, "count": 0, "results": [],
+                "error": f"search HTTP {r.status_code}"}
+    results = _parse_ddg(r.text)[:limit]
+    return {"provider": "duckduckgo", "query": query, "count": len(results),
+            "results": results, "error": None}
+
+
 # self-check: parsing, dedup, url-skip, and title fallback (no network needed)
 _seen = set()
 _r = _extract_results({"posts": [
