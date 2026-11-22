@@ -7,4 +7,5 @@ dependencies = [
     "requests>=2.32",
     "openai>=3.0",
     "mcp>=1.9",
+    "flask>=3.1.3",
 ]
